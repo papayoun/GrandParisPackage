@@ -1,6 +1,5 @@
-\name{GrandParisPackage-package}
+\name{GrandParisPackage}
 \alias{GrandParisPackage-package}
-\alias{GrandParisPackage}
 \docType{package}
 \title{
 \packageTitle{GrandParisPackage}
@@ -9,26 +8,19 @@
 \packageDescription{GrandParisPackage}
 }
 \details{
-
 The DESCRIPTION file:
 \packageDESCRIPTION{GrandParisPackage}
 \packageIndices{GrandParisPackage}
-~~ An overview of how to use the package, including the most important functions ~~
-}
+A package to perform particle smoothing in partially observed diffusion processes}
 \author{
 \packageAuthor{GrandParisPackage}
 
 Maintainer: \packageMaintainer{GrandParisPackage}
 }
-\references{
-~~ Literature or other references for background information ~~
-}
-~~ Optionally other standard keywords, one per line, from file KEYWORDS in the R ~~
-~~ documentation directory ~~
-\keyword{ package }
+\references{See the article from Gloaguen et al 2018}
+\keyword{SDE Smoothing}
 \seealso{
-~~ Optional links to other man pages, e.g. ~~
-~~ \code{\link[<pkg>:<pkg>-package]{<pkg>}} ~~
+SDE
 }
 \examples{
 ~~ simple examples of the most important functions ~~
