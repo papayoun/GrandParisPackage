@@ -2,6 +2,7 @@
 #include <assert.h>
 
 class GenericFunctions{
+public:
   static Rcpp::IntegerVector findInterval(Rcpp::NumericVector x, Rcpp::NumericVector breaks) {
     // equivalent of findInterval function
     Rcpp::IntegerVector out(x.size());
