@@ -6,19 +6,11 @@
 
 using namespace Rcpp;
 
-// debugPrint
-void debugPrint(Rcpp::NumericMatrix x);
-RcppExport SEXP _GrandParisPackage_debugPrint(SEXP xSEXP) {
-BEGIN_RCPP
-    Rcpp::RNGScope rcpp_rngScope_gen;
-    Rcpp::traits::input_parameter< Rcpp::NumericMatrix >::type x(xSEXP);
-    debugPrint(x);
-    return R_NilValue;
-END_RCPP
-}
+
+RcppExport SEXP _rcpp_module_boot_MyModule();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_GrandParisPackage_debugPrint", (DL_FUNC) &_GrandParisPackage_debugPrint, 1},
+    {"_rcpp_module_boot_MyModule", (DL_FUNC) &_rcpp_module_boot_MyModule, 0},
     {NULL, NULL, 0}
 };
 

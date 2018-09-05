@@ -3,11 +3,13 @@ Type: Package
 Title: What the package does (short line)
 Version: 1.0
 Date: 2018-09-05
-Author: Who wrote it
+Author: Pierre Gloaguen
 Maintainer: Who to complain to <yourfault@somewhere.net>
 Description: More about what it does (maybe more than one line)
 License: What license is it under?
+Depends: Rcpp (>= 0.12.8)
 Imports: Rcpp (>= 0.12.18)
 LinkingTo: Rcpp, RcppArmadillo
+RcppModules: MyModule
 RoxygenNote: 6.1.0
 Encoding: UTF-8
