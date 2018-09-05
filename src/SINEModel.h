@@ -2,6 +2,7 @@
 #ifndef GenericFunctions_H
 #define GenericFunctions_H
 // ' One dimensional SDE sinus model dX_t = sin(X_t - theta)dt + dW_t
+//' @export SINEModel
 class SINEModel{  
 private:
   ////////////// ATTRIBUTES /////////////////////////////////
@@ -314,4 +315,14 @@ public:
     return fixedPart * randomPart;
   };// end of unbiasedGradLogDensity method;
 };
+// Exposes the classe to Rcpp
+RCPP_MODULE(MyModule) {
+  using namespace Rcpp;
+  
+  class_<SINEModel>("SINEModel")
+    .constructor<double>("constructor") // This exposes the default constructor
+    .method("getTheta", &SINEModel::getTheta) // This exposes the estim method
+  ;
+  
+}
 #endif

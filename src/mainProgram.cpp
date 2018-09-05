@@ -15,27 +15,4 @@
 //
 // via the exports attribute we tell Rcpp to make this function
 // available from R
-//
-//' @export GaussModLin
-class GaussModLin{
-private:
-  double beta;
-public:
-  GaussModLin(double beta_):
-    beta(beta_) {}
-  double getBeta(){return beta;}
-};
-
-
-// Expose the classes
-RCPP_MODULE(MyModule) {
-  using namespace Rcpp;
-  
-  class_<GaussModLin>("GaussModLin")
-    .constructor<double>("constructor") // This exposes the default constructor
-    .method("getBeta", &GaussModLin::getBeta) // This exposes the estim method
-  ;
-  
-}
-
 
