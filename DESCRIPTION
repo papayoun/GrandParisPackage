@@ -10,6 +10,9 @@ License: What license is it under?
 Depends: Rcpp (>= 0.12.8)
 Imports: Rcpp (>= 0.12.18)
 LinkingTo: Rcpp, RcppArmadillo
-RcppModules: MyModule
+RcppModules: SINEModel_Module
 RoxygenNote: 6.1.0
 Encoding: UTF-8
+Suggests: knitr,
+    rmarkdown
+VignetteBuilder: knitr

@@ -7,10 +7,10 @@
 using namespace Rcpp;
 
 
-RcppExport SEXP _rcpp_module_boot_MyModule();
+RcppExport SEXP _rcpp_module_boot_SINEModel_Module();
 
 static const R_CallMethodDef CallEntries[] = {
-    {"_rcpp_module_boot_MyModule", (DL_FUNC) &_rcpp_module_boot_MyModule, 0},
+    {"_rcpp_module_boot_SINEModel_Module", (DL_FUNC) &_rcpp_module_boot_SINEModel_Module, 0},
     {NULL, NULL, 0}
 };
 

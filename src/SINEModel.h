@@ -46,7 +46,7 @@ private:
   double fixedTermLogDensityEstimate(const double& x0, const double& y, 
                                      const double& Delta) const{
     double gradDeltaPot = gradThetaPotential(y) - gradThetaPotential(x0);
-    return (gradDeltaPot - gradPsiLowerBound(theta) * Delta) * Delta; 
+    return (gradDeltaPot - gradPsiLowerBound(theta) * Delta); 
   };
   // Simulation methods
   void initiateSkeleton(Rcpp::NumericVector skeletonTimes){
@@ -244,7 +244,9 @@ public:
   };// end of simulateTrajectory method
   //The rho_{\Delta_k} of Gloaguen et al. 2018
   
-  double unbiasedDensityEstimate(const double& x0, const double& xF, const double& t0, const double& tF, const unsigned int& sampleSize, const bool& GPE2 = false) const{
+  double unbiasedDensityEstimate(const double& x0, const double& xF, 
+                                 const double& t0, const double& tF, 
+                                 const unsigned int& sampleSize, const bool& GPE2 = false) const{
     double Delta = tF-t0;
     double randomGPETerm = 0.0;
     for(unsigned int i = 0; i < sampleSize; i++){
@@ -312,17 +314,20 @@ public:
       double simulatedXu = randomTimeConditionalExactSim(x0, xF, t0, tF, maximalTries);
       randomPart -= gradThetaPhi(simulatedXu) / sampleSize;
     }// end of loop over sampleSize
-    return fixedPart * randomPart;
+    return fixedPart + Delta * randomPart;
   };// end of unbiasedGradLogDensity method;
 };
-// Exposes the classe to Rcpp
-RCPP_MODULE(MyModule) {
+// Exposes the class to Rcpp
+RCPP_MODULE(SINEModel_Module) {
   using namespace Rcpp;
-  
   class_<SINEModel>("SINEModel")
     .constructor<double>("constructor") // This exposes the default constructor
     .method("getTheta", &SINEModel::getTheta) // This exposes the estim method
+    .method("rSINE", &SINEModel::simulateTrajectory, 
+  "Needs 2 args, a double (starting point), and a vector of increasing simul times")
+    .method("density", &SINEModel::unbiasedDensityEstimate)
+    .method("logDensity", &SINEModel::unbiasedLogDensityEstimate)
+    .method("gradLogDensity", &SINEModel::unbiasedGradLogDensityEstimate)
   ;
-  
 }
 #endif

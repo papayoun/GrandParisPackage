@@ -1,0 +1,77 @@
+---
+title: "Package for SDE smoothing"
+author: "Pierre Gloaguen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  cache = F,
+  comment = NA, fig.width = 8, 
+  fig.height = 6, fig.align = "center"
+)
+```
+
+# Loading
+
+```{r}
+rm(list = ls())
+library(GrandParisPackage)
+```
+
+# Simulation of a SINEProcess
+
+```{r simulation}
+trueTheta <- 3.14
+times <- seq(0, 10, length = 500)
+processValues <- SINE_simulate(trueTheta, 0, times)
+```
+
+```{r plotProcess, echo = F}
+library(extrafont)
+par(family = "LM Roman 10")
+plot(times, processValues, xlab = "Time", ylab = "Process value", type = "b", pch = 20,
+     main = "Example of simulated SINE process")
+```
+
+# Plotting approximated log-likelihood
+
+## The log-likelihood
+
+```{r, logLikelihood}
+testedThetas <- seq(0, 2*pi, length.out = 100)
+logDensities <- sapply(testedThetas, function(theta){
+  mean(SINE_density(theta = theta, X = processValues, times = times, MC.size = 60, log = T))
+})
+```
+
+## The gradient of the log likelihood
+
+```{r gradientLogLikelihood}
+gradLogDensities <- sapply(testedThetas, function(theta){
+  mean(SINE_logDensityGradient(theta = theta, X = processValues, times = times, MC.size = 30))
+})
+```
+
+```{r plotLogLike, echo = F}
+par(mfrow = c(2, 1), family = "LM Roman 10", oma = c(2, 2, 2, 0.1))
+par(mar = c(0, 3, 1, 0))
+plot(testedThetas, logDensities, xlab = "", xaxt = "n", ylab = "", cex.lab = 1.5)
+mtext(text = c("Log-vraisemblance"), side = 2, outer = T, line = 0, at = 0.75, cex = 1.5)
+mtext(text = c("Courbes estimées"), side = 3, outer = T, line = 0, at = 0.5, cex = 2)
+abline(v = c(trueTheta, testedThetas[which.max(logDensities)]), 
+       col = c("darkgreen", "red"), lwd = 2, lty = 1)
+legend("topleft", col = c("darkgreen", "red"), lwd = 2, bty = "n", 
+       legend = c("Vrai", "Max. de Vrais."))
+par(mar = c(1, 3, 0, 0))
+plot(testedThetas, gradLogDensities, xlab = "", ylab = "", cex.lab = 1.5)
+mtext(text = c("Gradient"), side = 2, outer = T, line = 0, at = 0.25, cex = 1.5)
+mtext(text = expression(theta), side = 1, outer = T, line = 0, at = 0.6, cex = 2)
+abline(h = 0, lty = 2, lwd = 3)
+abline(v = c(trueTheta, testedThetas[which.max(logDensities)]), 
+       col = c("darkgreen", "red"), lwd = 2, lty = 1)
+```
+
+
+
