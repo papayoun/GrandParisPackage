@@ -20,19 +20,26 @@ rm(list = ls())
 library(GrandParisPackage)
 ```
 
-# Simulation of a SINEProcess
+# Simulation of a POD ruled by a SINE model
 
 ```{r simulation}
-trueTheta <- 3.14
+trueTheta <- 3.14; trueSigma2 <- 0.2;
 times <- seq(0, 10, length = 500)
-processValues <- SINE_simulate(trueTheta, 0, times)
+simulatedPOD <- SINE_simulate(x0 = 0,times =  times, 
+                               theta = trueTheta, sigma2 = trueSigma2)
 ```
 
 ```{r plotProcess, echo = F}
 library(extrafont)
 par(family = "LM Roman 10")
-plot(times, processValues, xlab = "Time", ylab = "Process value", type = "b", pch = 20,
+ylim <- range(simulatedPOD[, 1:2])
+plot(simulatedPOD[, "simulationTimes"], simulatedPOD[, "hiddenStates"], 
+     xlab = "Time", ylim = ylim,  ylab = "Process value", type = "b", pch = 20,
      main = "Example of simulated SINE process")
+points(simulatedPOD[, "simulationTimes"], simulatedPOD[, "observations"], 
+     pch = 18, col = "blue")
+legend("topleft", pch = c(20, 18), col = c("blue", "black"), cex = 2, bty = "n",
+       legend = c("Observations", "Hidden state"))
 ```
 
 # Plotting approximated log-likelihood
@@ -41,6 +48,7 @@ plot(times, processValues, xlab = "Time", ylab = "Process value", type = "b", pc
 
 ```{r, logLikelihood}
 testedThetas <- seq(0, 2*pi, length.out = 100)
+processValues <- simulatedPOD[, "hiddenStates"]
 logDensities <- sapply(testedThetas, function(theta){
   mean(SINE_density(theta = theta, X = processValues, times = times, MC.size = 60, log = T))
 })

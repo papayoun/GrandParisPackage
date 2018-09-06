@@ -4,14 +4,14 @@
 \alias{SINE_logDensityGradient}
 \title{compute logdensity gradient in the SINE model}
 \usage{
-SINE_logDensityGradient(theta = pi, X, times, MC.size = 30)
+SINE_logDensityGradient(X, times, theta = pi, MC.size = 30)
 }
 \arguments{
-\item{theta}{Theta parameter of the model, default to pi}
-
 \item{X}{Process values}
 
 \item{times}{vector of simulation times}
+
+\item{theta}{Theta parameter of the model, default to pi}
 
 \item{MC.size}{Monte Carlo effort to compute density}
 }

@@ -4,14 +4,14 @@
 \alias{SINE_density}
 \title{compute density  in the SINE model}
 \usage{
-SINE_density(theta = pi, X, times, MC.size = 30, log = F)
+SINE_density(X, times, theta = pi, MC.size = 30, log = F)
 }
 \arguments{
-\item{theta}{Theta parameter of the model, default to pi}
-
 \item{X}{Process values}
 
 \item{times}{vector of simulation times}
+
+\item{theta}{Theta parameter of the model, default to pi}
 
 \item{MC.size}{Monte Carlo effort to compute density}
 

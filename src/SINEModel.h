@@ -1,8 +1,7 @@
 #include <RcppArmadillo.h>      // declarations for both Rcpp and RcppArmadillo offering Armadillo classes
 #ifndef GenericFunctions_H
 #define GenericFunctions_H
-// ' One dimensional SDE sinus model dX_t = sin(X_t - theta)dt + dW_t
-//' @export SINEModel
+
 class SINEModel{  
 private:
   ////////////// ATTRIBUTES /////////////////////////////////
@@ -317,17 +316,4 @@ public:
     return fixedPart + Delta * randomPart;
   };// end of unbiasedGradLogDensity method;
 };
-// Exposes the class to Rcpp
-RCPP_MODULE(SINEModel_Module) {
-  using namespace Rcpp;
-  class_<SINEModel>("SINEModel")
-    .constructor<double>("constructor") // This exposes the default constructor
-    .method("getTheta", &SINEModel::getTheta) // This exposes the estim method
-    .method("rSINE", &SINEModel::simulateTrajectory, 
-  "Needs 2 args, a double (starting point), and a vector of increasing simul times")
-    .method("density", &SINEModel::unbiasedDensityEstimate)
-    .method("logDensity", &SINEModel::unbiasedLogDensityEstimate)
-    .method("gradLogDensity", &SINEModel::unbiasedGradLogDensityEstimate)
-  ;
-}
 #endif

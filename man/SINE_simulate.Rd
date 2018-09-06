@@ -4,10 +4,13 @@
 \alias{SINE_simulate}
 \title{Simulate a SINE process}
 \usage{
-SINE_simulate(theta = pi, x0 = 0, times = seq(0, 1, length.out = 10))
+SINE_simulate(theta = pi, sigma2 = 1, x0 = 0, times = seq(0, 1,
+  length.out = 10))
 }
 \arguments{
 \item{theta}{Theta parameter of the model, default to pi}
+
+\item{sigma2}{observation process variance}
 
 \item{x0}{starting value}
 
