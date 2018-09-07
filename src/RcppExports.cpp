@@ -6,10 +6,37 @@
 
 using namespace Rcpp;
 
+// fastTangOR
+Rcpp::List fastTangOR(const Rcpp::NumericVector& observations, const Rcpp::NumericVector& observationTimes, const double& thetaModel, const double& sigma2, const Rcpp::LogicalVector& updateOrders, Rcpp::NumericMatrix& gradientSteps, const double& randomWalkParam, const unsigned int& particleSize, const unsigned int& densitySampleSize, const unsigned int& logDensitySampleSize, const unsigned int& backwardSampleSize, const unsigned int& backwardSamplingMaxTry, const unsigned int& skeletonSimulationMaxTry, const bool& estimateTheta, const bool& estimateSigma2, const bool& all);
+RcppExport SEXP _GrandParisPackage_fastTangOR(SEXP observationsSEXP, SEXP observationTimesSEXP, SEXP thetaModelSEXP, SEXP sigma2SEXP, SEXP updateOrdersSEXP, SEXP gradientStepsSEXP, SEXP randomWalkParamSEXP, SEXP particleSizeSEXP, SEXP densitySampleSizeSEXP, SEXP logDensitySampleSizeSEXP, SEXP backwardSampleSizeSEXP, SEXP backwardSamplingMaxTrySEXP, SEXP skeletonSimulationMaxTrySEXP, SEXP estimateThetaSEXP, SEXP estimateSigma2SEXP, SEXP allSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type observations(observationsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type observationTimes(observationTimesSEXP);
+    Rcpp::traits::input_parameter< const double& >::type thetaModel(thetaModelSEXP);
+    Rcpp::traits::input_parameter< const double& >::type sigma2(sigma2SEXP);
+    Rcpp::traits::input_parameter< const Rcpp::LogicalVector& >::type updateOrders(updateOrdersSEXP);
+    Rcpp::traits::input_parameter< Rcpp::NumericMatrix& >::type gradientSteps(gradientStepsSEXP);
+    Rcpp::traits::input_parameter< const double& >::type randomWalkParam(randomWalkParamSEXP);
+    Rcpp::traits::input_parameter< const unsigned int& >::type particleSize(particleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int& >::type densitySampleSize(densitySampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int& >::type logDensitySampleSize(logDensitySampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int& >::type backwardSampleSize(backwardSampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int& >::type backwardSamplingMaxTry(backwardSamplingMaxTrySEXP);
+    Rcpp::traits::input_parameter< const unsigned int& >::type skeletonSimulationMaxTry(skeletonSimulationMaxTrySEXP);
+    Rcpp::traits::input_parameter< const bool& >::type estimateTheta(estimateThetaSEXP);
+    Rcpp::traits::input_parameter< const bool& >::type estimateSigma2(estimateSigma2SEXP);
+    Rcpp::traits::input_parameter< const bool& >::type all(allSEXP);
+    rcpp_result_gen = Rcpp::wrap(fastTangOR(observations, observationTimes, thetaModel, sigma2, updateOrders, gradientSteps, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2, all));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_SINEModel_Module();
 
 static const R_CallMethodDef CallEntries[] = {
+    {"_GrandParisPackage_fastTangOR", (DL_FUNC) &_GrandParisPackage_fastTangOR, 16},
     {"_rcpp_module_boot_SINEModel_Module", (DL_FUNC) &_rcpp_module_boot_SINEModel_Module, 0},
     {NULL, NULL, 0}
 };

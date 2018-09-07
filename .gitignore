@@ -6,3 +6,5 @@ src/*.o
 src/*.so
 src/*.dll
 inst/doc
+vignettes/simulatedResults
+vignettes/*_cache

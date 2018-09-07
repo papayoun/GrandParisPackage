@@ -63,7 +63,7 @@ public:
     Rcpp::IntegerVector inds = findInterval(us, cumprob) - 1;
     return x[inds];
   }
-  static Rcpp::IntegerVector sampleC(const Rcpp::IntegerVector& x,
+  static Rcpp::IntegerVector sampleReplace(const Rcpp::IntegerVector& x,
                                      const int& size,
                                      const Rcpp::NumericVector& probs){
     int nx=x.size();int np=probs.size();

@@ -3,7 +3,19 @@
 #include "RcppArmadillo.h"
 
 class DebugMethods{// Useful functions for debugging
-  public:
+private:
+  int counter;
+public:
+    DebugMethods(int i = 0){
+      counter = i;
+    };
+    void set0(){
+      counter = 0;
+    }
+    void here(){
+      std::cout << "Je suis là numero "<< counter << std::endl;
+      counter += 1;
+    }
     static void debugprint(Rcpp::IntegerVector x, std::string name = ""){
       int n = x.size();
       std::cout << "Vecteur"<< name<< ": ";

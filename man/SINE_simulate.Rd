@@ -4,7 +4,7 @@
 \alias{SINE_simulate}
 \title{Simulate a SINE process}
 \usage{
-SINE_simulate(theta = pi, sigma2 = 1, x0 = 0, times = seq(0, 1,
+SINE_simulate(theta = 3.14, sigma2 = 1, x0 = 0, times = seq(0, 1,
   length.out = 10))
 }
 \arguments{

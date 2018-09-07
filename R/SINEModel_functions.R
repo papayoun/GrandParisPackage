@@ -9,9 +9,10 @@ loadModule("SINEModel_Module", TRUE)
 #' @param times vector of simulation times
 #' @return a vector same length as times
 #' @export
-SINE_simulate <- function(theta = pi, sigma2 = 1, x0 = 0, times = seq(0, 1, length.out = 10)){
+SINE_simulate <- function(theta = 3.14, sigma2 = 1, x0 = 0, times = seq(0, 1, length.out = 10)){
   model <- new(SINE_POD, theta, sigma2)
-  return(do.call(cbind, model$rSINE_POD(x0, times)))
+  result <- do.call(cbind, model$rSINE_POD(x0, times))
+  result
 }
 
 #' @title compute density  in the SINE model

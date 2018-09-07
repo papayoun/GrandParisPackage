@@ -176,15 +176,6 @@ private:
       std::cout << "BAD SIMULATION";
     return candidate;
   };
-  // Methods for computing transition density estimation
-  double fixedGPETerm(const double& x0, const double& y, const double& Delta, bool logValue = false) const{
-    double logGaussianTerm = - 0.5 * (log(2 * M_PI * Delta)  + (y - x0) * (y - x0) / Delta);
-    double logModelTerm = potentialUnit(y) - potentialUnit(x0) - Delta * psiLowerBound;
-    if(logValue)
-      return logGaussianTerm + logModelTerm;
-    else
-      return exp(logGaussianTerm + logModelTerm);
-  };
   double getGPE2GammaTerm(const double& x0, const double& y, const double& Delta) const{
     double trigoTerm = 0.0;
     if(x0 == y){
@@ -228,6 +219,14 @@ public:
       output(i) = psiUnit(x(i));
     }
     return output;
+  };
+  double fixedGPETerm(const double& x0, const double& y, const double& delta, bool logValue = false) const{
+    double logGaussianTerm = - 0.5 * (log(2 * M_PI * delta)  + (y - x0) * (y - x0) / delta);
+    double logModelTerm = potentialUnit(y) - potentialUnit(x0) - delta * psiLowerBound;
+    if(logValue)
+      return logGaussianTerm + logModelTerm;
+    else
+      return exp(logGaussianTerm + logModelTerm);
   };
   Rcpp::NumericVector simulateTrajectory(const double& x0,
                                          const Rcpp::NumericVector& simulationTimes,
