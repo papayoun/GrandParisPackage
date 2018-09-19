@@ -52,9 +52,10 @@ public:
   Rcpp::NumericVector observationDensity(const Rcpp::NumericVector& hiddenStates, const double& observation) const{
     unsigned int particleSize = hiddenStates.size();
     Rcpp::NumericVector output(particleSize);
-    for(unsigned int i = 0; i < particleSize; i++){
-      output[i] = observationDensityUnit(hiddenStates[i], observation);
-    }
+    // for(unsigned int i = 0; i < particleSize; i++){
+    //   output[i] = observationDensityUnit(hiddenStates[i], observation);
+    // }
+    output = Rcpp::dnorm(hiddenStates, observation, pow(observationVariance, 0.5));
     return output;
   }
   Rcpp::NumericVector gradObservationDensity(const double& hiddenState, const double& observation) const{
@@ -74,7 +75,7 @@ public:
   Rcpp::NumericVector gradLogTransitionDensity(const double& oldParticle, const double& newParticle,
                                          const double& t0, const double& tF, 
                                          const unsigned int& sampleSize, const unsigned int& maximalTries = 1000){
-    Rcpp::NumericVector output(2); output.fill(0);// The second term corresponds to Sigma and is null
+    Rcpp::NumericVector output(2); output.fill(0);// The second term corresponds to Sigma2 and is null
     output[0] = model.unbiasedGradLogDensityEstimate(oldParticle, newParticle, t0, tF, sampleSize, maximalTries);
     return output;
   }

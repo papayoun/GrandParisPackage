@@ -23,15 +23,13 @@ library(GrandParisPackage)
 # Simulation of a POD ruled by a SINE model
 
 ```{r simulation}
-set.seed(123)
-trueTheta <- 3.14; trueSigma2 <- 0.2;
-n <- 300
-times <- seq(0, n - 1, length = n)
-simulatedPOD <- SINE_simulate(x0 = 0, times =  times, 
-                               theta = trueTheta, sigma2 = trueSigma2)
+set.seed(122)
+trueTheta <- pi/4; trueSigma2 <- 1;
+n <- 500; times <- seq(0, by = 1, length = n);
+simulatedPOD <- SINE_simulate(trueTheta, trueSigma2, 10, times = times)
 ```
 
-```{r plotProcess, echo = F}
+```{r plotProcess, echo = F, warning=FALSE}
 library(extrafont)
 par(family = "LM Roman 10")
 ylim <- range(simulatedPOD[, 1:2])
@@ -97,21 +95,21 @@ Res <- fastTangOR(observations, times,
 ```
 
 
-```{r plotEstimation, echo = T}
-library(extrafont)
-par(mfrow = c(2, 1), family = "LM Roman 10")
-par(mar = c(mar=c(0, 4.1, 4.1, 0.5)))
-matplot(times, simulatedPOD[, 1:2], 
-        xaxt = "n", type = c("p", "b"), pch = c(18, 20), col = c("blue", "red"),
-        ylab = "Process values", cex = 0.5, xlab = "", cex.lab = 1.5)
-mtext(side = 3, line = 2, expression(Estimation~of~theta~with~known~sigma^2), cex = 2)
-legend(x = "topright", bty = "n", pch = c(18, 20), col = c("blue", "red"), cex = 1.5, 
-       legend = c("Observed", "Hidden"))
-par(mar = c(mar=c(4.1, 4.1, 0, 0.5)))
-matplot(times, Res$Estimates[,1], lty = 1, type = "l", xlab = "", 
-        ylab = "Estimated value", xaxt = "n", cex.lab = 1.5)
-abline (h = trueTheta, lwd = 2, col = "black", lty = 2)
-axis(side = 1, at = seq(0, 1000, by = 100))
-mtext(side = 1, line = 2.5, "Time", cex = 2)
-```
+<!-- ```{r plotEstimation, echo = T} -->
+<!-- library(extrafont) -->
+<!-- par(mfrow = c(2, 1), family = "LM Roman 10") -->
+<!-- par(mar = c(mar=c(0, 4.1, 4.1, 0.5))) -->
+<!-- matplot(times, simulatedPOD[, 1:2], -->
+<!--         xaxt = "n", type = c("p", "b"), pch = c(18, 20), col = c("blue", "red"), -->
+<!--         ylab = "Process values", cex = 0.5, xlab = "", cex.lab = 1.5) -->
+<!-- mtext(side = 3, line = 2, expression(Estimation~of~theta~with~known~sigma^2), cex = 2) -->
+<!-- legend(x = "topright", bty = "n", pch = c(18, 20), col = c("blue", "red"), cex = 1.5, -->
+<!--        legend = c("Observed", "Hidden")) -->
+<!-- par(mar = c(mar=c(4.1, 4.1, 0, 0.5))) -->
+<!-- matplot(times, Res$Estimates[,1], lty = 1, type = "l", xlab = "", -->
+<!--         ylab = "Estimated value", xaxt = "n", cex.lab = 1.5) -->
+<!-- abline (h = trueTheta, lwd = 2, col = "black", lty = 2) -->
+<!-- axis(side = 1, at = seq(0, 1000, by = 100)) -->
+<!-- mtext(side = 1, line = 2.5, "Time", cex = 2) -->
+<!-- ``` -->
 

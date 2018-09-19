@@ -60,7 +60,7 @@ private:
     particleFilteringWeights(Rcpp::_, 0) = normWeights(unNormedWeights);
   };
   // Propagation method
-  void propagateParticles(const unsigned int& ancestorIndex, bool updateZetas = false){
+  void propagateParticles(const unsigned int& ancestorIndex){
     double t0 = observationTimes[ancestorIndex];
     double tF = observationTimes[ancestorIndex + 1];
     double Delta = tF - t0;
@@ -71,7 +71,7 @@ private:
       selectedParticles[i] = particleSet(selectedIndexes[i], ancestorIndex);
     }
     double futureObs = observations[ancestorIndex + 1];
-    particleSet(Rcpp::_, ancestorIndex + 1)  = propModel.simulateNextParticle(selectedParticles, futureObs, Delta);
+    particleSet(Rcpp::_, ancestorIndex + 1)  = propModel.simulateNextParticle(selectedParticles, futureObs, Delta, true);
     Rcpp::NumericVector proposalDensityValues = propModel.densityNextParticle(selectedParticles, particleSet(Rcpp::_, ancestorIndex + 1), futureObs, Delta);
     Rcpp::NumericVector transitionDensityValues = propModel.evalTransitionDensity(selectedParticles, particleSet(Rcpp::_, ancestorIndex + 1),
                                                                             t0, tF, densitySampleSize, true);// the true is to use GPE2
@@ -133,14 +133,33 @@ private:
     tauTangentFilter[childIndex](childParticleIndex, Rcpp::_) = (tauTangentFilter[childIndex](childParticleIndex, Rcpp::_)
         + updateTerm);
   };
+  Rcpp::NumericVector getTauBar(const unsigned int&  childIndex){
+    return(colMeans(tauTangentFilter[childIndex]));
+    // Rcpp::NumericVector output(2);
+    // for(int j = 0; j < particleSize; j++){
+    //   double weight = particleFilteringWeights(j, childIndex);
+    //   output(0) +=  tauTangentFilter[childIndex](j, 0) * weight;
+    //   output(1) +=  tauTangentFilter[childIndex](j, 1) * weight;
+    // }
+    // return output;
+  }
   void updateZetas(const unsigned int& ancestorIndex){
     zeta1.fill(0); zeta2.fill(0);
-    Rcpp::NumericVector tauBar = colMeans(tauTangentFilter[ancestorIndex + 1]);
+    Rcpp::NumericVector tauBar = getTauBar(ancestorIndex + 1);
+    DebugMethods::debugprint(tauBar, "taubar", false);
+    // Rcpp::NumericVector gradDens(particleSize);
+    // Rcpp::NumericVector gradLogDens(particleSize);
+    double currentObs = observations[ancestorIndex + 1];
     for(unsigned int j = 0; j < particleSize; j++){
-      zeta1 = zeta1 + propModel.evalGradObservationDensity(particleSet(j, ancestorIndex + 1), observations[ancestorIndex + 1]) / particleSize;
-      zeta2 = zeta2 + (tauTangentFilter[ancestorIndex + 1](j,Rcpp::_) - tauBar) * observationDensityValues[j] / particleSize; //* particleFilteringWeights(j, ancestorIndex + 1);
+      double currentParticle = particleSet(j, ancestorIndex + 1);
+      // gradDens(j) =  propModel.evalGradObservationDensity(currentParticle, currentObs)[1];
+      // gradLogDens(j) = propModel.evalGradLogObservationDensity(currentParticle, currentObs)[1];
+      zeta1 += propModel.evalGradObservationDensity(currentParticle, currentObs) / particleSize;
+      zeta2 += (tauTangentFilter[ancestorIndex + 1](j, Rcpp::_) - tauBar) * observationDensityValues[j] / particleSize; //* particleFilteringWeights(j, ancestorIndex + 1);
     }
-    zeta3 = mean(observationDensityValues);
+    DebugMethods::debugprint(zeta1, "zeta1", false);
+    DebugMethods::debugprint(zeta2, "zeta2", false);
+    zeta3 = Rcpp::mean(observationDensityValues);
   }
   void updateGradientStep(const Rcpp::NumericVector& currentGradient){
     Rcpp::LogicalVector checkSameSign = GenericFunctions::sameSign(currentGradient, oldGradient);
@@ -163,6 +182,9 @@ private:
   }
   Rcpp::NumericVector getGradientUpdate(const unsigned int& ancestorIndex, const unsigned int& updateNumber){
     updateZetas(ancestorIndex);
+    // DebugMethods::debugprint(zeta1, "zeta1", false);
+    // DebugMethods::debugprint(zeta2, "zeta2", false);
+    // std::cout << "zeta3" << zeta3 << std::endl; 
     Rcpp::NumericVector zetaVector = (zeta1 + zeta2) / zeta3;
     // Rcpp::NumericVector gradientDirection = getDirection(zetaVector);
     if(updateNumber == 0){
@@ -173,18 +195,21 @@ private:
     // }
     return gradientStep * zetaVector;
   }
-  Rcpp::NumericVector getNewParam(Rcpp::NumericVector& gradientUpdate) const{
+  Rcpp::NumericVector getNewParam(Rcpp::NumericVector& gradientUpdate,
+                                  double sigmaThresh = 0.1) const{
     bool conditionSigma = false;
-    bool conditionTheta = false;
     Rcpp::NumericVector output(2);
-    while(!(conditionSigma & conditionTheta)){
+    while(!(conditionSigma)){
       output = propModel.getParams() + gradientUpdate;
-      conditionSigma = (output[1] > 0);
-      conditionTheta = (output[0] >= 0  & output[0] <= 2 * M_PI);
-      if(!(conditionSigma))
-        gradientUpdate[1] = gradientUpdate[1] / 2;
-      if(!(conditionTheta))
-        gradientUpdate[0] = gradientUpdate[0] / 2;
+      // conditionSigma = (output[1] > 0) & (output[1] < 10);
+      conditionSigma = (output[1] >= sigmaThresh);
+      if(!(conditionSigma)){
+        output[1] = sigmaThresh;
+        conditionSigma = true;
+      }
+      //   
+      // if(!(conditionTheta))
+      //   gradientUpdate[0] = gradientUpdate[0] / 2;
     }
     return output;
   };
@@ -236,15 +261,19 @@ public:
     }
     return output;
   };// end of evalEstep method;
-  Rcpp::NumericMatrix tangentFilterEstimation(const Rcpp::LogicalVector& updateOrders, Rcpp::NumericMatrix& gradientSteps){
+  Rcpp::NumericMatrix tangentFilterEstimation(const Rcpp::LogicalVector& updateOrders, 
+                                              Rcpp::NumericMatrix& gradientSteps){
     Rcpp::NumericMatrix output(observationSize, 2);
     output(0, Rcpp::_) = propModel.getParams();
     initializeTauTangentFilter();// Initialize matrix of 0
     setInitalParticles();
     unsigned int updateCounter = 0;
     for(int k = 0; k < (observationSize - 1); k++){
+      // DebugMethods::debugprint(propModel.getParams(), "Current Param", false);
+      DebugMethods::debugprint(tauTangentFilter[k], "TauK");
+      DebugMethods::debugprint(tauTangentFilter[k + 1], "TauK + 1 ");
       gradientStep = gradientSteps(k, Rcpp::_);
-      propagateParticles(k, updateOrders[k]);
+      propagateParticles(k);
       initializeBackwardSampling(k);// Samples of ancestor index is made here
       for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
         setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
@@ -257,6 +286,7 @@ public:
       if(updateOrders[k]){
         // std::cout << "Iteration " << k << std::endl;
         Rcpp::NumericVector newGradientUpdate = getGradientUpdate(k, updateCounter);
+        DebugMethods::debugprint(newGradientUpdate, "Gradient", false);
         Rcpp::NumericVector newParams = getNewParam(newGradientUpdate);
         propModel.setParams(newParams);
         updateCounter += 1;
@@ -266,16 +296,17 @@ public:
     return output;
   };// end of evalEstep method;
   void print() const{
-    std::cout << "Particle size:" << particleSize << std::endl;
-    // DebugMethods::debugprint(particleIndexes, "Particle indexes");
-    DebugMethods::debugprint(observations, "Observations", false);
-    DebugMethods::debugprint(observationTimes, "ObservationsTimes", false);
-    std::cout << "Observation size:" << observationSize << std::endl;
-    // to be updated attributes
-    DebugMethods::debugprint(observationDensityValues , "ObservationsDensityValues", false);
-    DebugMethods::debugprint(particleSet, "particleSet");
-    DebugMethods::debugprint(particleFilteringWeights, "particleWeights");
-    std::cout << "Tau size:" << tauTangentFilter.size() << std::endl;
+    // std::cout << "Particle size:" << particleSize << std::endl;
+    // // DebugMethods::debugprint(particleIndexes, "Particle indexes");
+    // DebugMethods::debugprint(observations, "Observations", false);
+    // DebugMethods::debugprint(observationTimes, "ObservationsTimes", false);
+    // std::cout << "Observation size:" << observationSize << std::endl;
+    // // to be updated attributes
+    // DebugMethods::debugprint(observationDensityValues , "ObservationsDensityValues", false);
+    // DebugMethods::debugprint(particleSet, "particleSet");
+    // DebugMethods::debugprint(particleFilteringWeights, "particleWeights");
+    // std::cout << "Tau size:" << tauTangentFilter.size() << std::endl;
+    DebugMethods::debugprint(propModel.getParams(), false);
     // std::vector<Rcpp::NumericMatrix> tauTangentFilter;
     // ProposalSINEModel propModel;
     // Rcpp::NumericVector zeta1, zeta2;// Conform to paper notations

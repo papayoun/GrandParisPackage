@@ -26,9 +26,9 @@ public:
     return Rcpp::dnbinom(xtmp, size, p, lg)[0];
   }
   static double dnorm(double x, double mean,//Do not exist when "x" is a double
-                      double sigma, bool log_val=false){
+                      double sigma, bool log_val=false){// sigma is the standard deviation
     double log2pi = 1.8378770664093454835606594728112352797227949472755668;
-    double logretval = -0.5*(log2pi+2*log(sigma)
+    double logretval = -0.5*(log2pi + 2*log(sigma)
                                +(x-mean)*(x-mean)/(sigma*sigma));
     if(log_val){
       return logretval;

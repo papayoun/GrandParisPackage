@@ -7,20 +7,23 @@ private:
   double randomWalkStandDev;
   SINE_POD trueModel;
   Rcpp::NumericVector toEstimate;// Vector of 0 and 1 having the same length as number of params
+  double aroundObsVariance = 1;
   // In the SINE model case, length 2. Equals 1 if the parameter is to estimate, 0 if it is known
   double getKalmanVariance(double Delta) const{
-    double observationVariance = trueModel.getSigma2();
     double randomWalkVariance = randomWalkStandDev * randomWalkStandDev * Delta;
-    return randomWalkVariance * observationVariance / (randomWalkVariance + observationVariance);
+    return randomWalkVariance * aroundObsVariance / (randomWalkVariance + aroundObsVariance);
   }
   Rcpp::NumericVector getKalmanMeans(const Rcpp::NumericVector& startingParticles, 
                                      const double& futureObservation, 
                                      const double& Delta, 
-                                     const double& kalmanVariance) const{
-    Rcpp::NumericVector eulerSchemeMean = (startingParticles 
-                                       + trueModel.getModel().drift(startingParticles) * Delta);
+                                     const double& kalmanVariance,
+                                     const bool& pureRandomWalk = false) const{
+    Rcpp::NumericVector eulerSchemeMean = startingParticles;
+    if(!pureRandomWalk){
+      eulerSchemeMean += trueModel.getModel().drift(startingParticles) * Delta;
+    }
     Rcpp::NumericVector mean1 = eulerSchemeMean / (randomWalkStandDev * randomWalkStandDev * Delta);
-    double mean2 = futureObservation / trueModel.getSigma2();
+    double mean2 = futureObservation / aroundObsVariance;
     return kalmanVariance * (mean1 + mean2);
   };
 public:
@@ -31,7 +34,7 @@ public:
     if(estimTheta)
       tmp(0) = 1;
     if(estimSigma2)
-      tmp(1) = 0;
+      tmp(1) = 1;
     toEstimate = tmp;
   };
   Rcpp::NumericVector simulateInitialParticle(const int& particleSize, 
@@ -42,14 +45,15 @@ public:
     return Rcpp::dnorm(particles, observation, randomWalkStandDev);
   };
   Rcpp::NumericVector simulateNextParticle(const Rcpp::NumericVector& oldParticles, 
-                                     const double& newObservation, const double& Delta) const{
+                                     const double& newObservation, const double& Delta,
+                                     const bool& pureRandomWalk = false) const{
     //using euler method
     
     unsigned int particleSize = oldParticles.size();
     Rcpp::NumericVector output(particleSize);
     double kalmanVariance = getKalmanVariance(Delta);
     Rcpp::NumericVector kalmanMeans = getKalmanMeans(oldParticles, newObservation, 
-                                                     Delta, kalmanVariance);
+                                                     Delta, kalmanVariance, pureRandomWalk);
     for(unsigned int i = 0; i < particleSize; i++){
       output[i] = Rcpp::rnorm(1, kalmanMeans[i], sqrt(kalmanVariance))[0];
     }  

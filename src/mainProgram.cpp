@@ -40,7 +40,7 @@ Rcpp::List fastTangOR(const Rcpp::NumericVector& observations,
   SINE_POD trueModel(thetaModel, sigma2);
   ProposalSINEModel propModel(randomWalkParam, trueModel, estimateTheta, estimateSigma2);
   SDEParticleSmoother mySmoother(observations, observationTimes,  propModel,
-                                 particleSize, densitySampleSize ,logDensitySampleSize,
+                                 particleSize, densitySampleSize , logDensitySampleSize,
                                  backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry);
   Rcpp::NumericMatrix output  = mySmoother.tangentFilterEstimation(updateOrders, gradientSteps);
   if(all){
