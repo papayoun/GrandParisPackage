@@ -8,6 +8,13 @@ fastTangOR <- function(observations, observationTimes, thetaModel, sigma2, updat
     .Call('_GrandParisPackage_fastTangOR', PACKAGE = 'GrandParisPackage', observations, observationTimes, thetaModel, sigma2, updateOrders, gradientSteps, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2, all)
 }
 
+#' @title Proposition model
+#' @name ProposalSINEModel
+#' @description POD with the unidimensional SDE sinus model dX_t = sin(X_t - theta)dt + dW_t
+#' and the observation model Y_t = X_t + N(0, sigma2), the proposal model is a random walk 
+#' @export ProposalSINEModel
+NULL
+
 #' @title Class of partially diffusion process ruled by a SINE model
 #' @name SINE_POD
 #' @description POD with the unidimensional SDE sinus model dX_t = sin(X_t - theta)dt + dW_t

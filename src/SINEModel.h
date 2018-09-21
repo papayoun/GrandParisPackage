@@ -18,32 +18,32 @@ private:
   ////////////// METHODS /////////////////////////////////
   // Model methods
   // Potenial of a unique double
-  double potentialUnit(const double& x) const {return -cos(x - theta);}
+  double potentialUnit(const double x) const {return -cos(x - theta);}
   // Drift of a unique double
-  double driftUnit(const double& x) const{return sin(x -theta);};
+  double driftUnit(const double x) const{return sin(x -theta);};
   // Laplacian 
-  double laplaciantUnit(const double& x) const{return cos(x -theta);};
+  double laplaciantUnit(const double x) const{return cos(x -theta);};
   // Psi, i.e. 0.5 * (norm(Drift) + Trace(Hessian(Potential)))
-  double psiUnit(const double& x) const{
+  double psiUnit(const double x) const{
     return 0.5  * (driftUnit(x) * driftUnit(x) + laplaciantUnit(x));
   };
   // Phi, i.e. Psi - LowerBound(Psi)
-  double phiUnit(const double& x) const{return psiUnit(x) - psiLowerBound;};
+  double phiUnit(const double x) const{return psiUnit(x) - psiLowerBound;};
   // Derivative of Phi w.r.t. theta
   // It is a double here, generally speaking should be a vector
-  double gradThetaPhi(const double& x) const{
+  double gradThetaPhi(const double x) const{
     return - 0.5 * sin(x - theta) * (-1 + 2 * cos(x - theta));
   };
   // Derivative of Potential w.r.t. theta
   // It is a double here, generally speaking should be a vector
-  double gradThetaPotential(const double& x) const{return - sin(x - theta);};
+  double gradThetaPotential(const double x) const{return - sin(x - theta);};
   // Derivative of LowerBound(Psi) w.r.t. theta
   // It is a double here, generally speaking should be a vector
-  double gradPsiLowerBound(const double& th) const{return 0.0;};
+  double gradPsiLowerBound(const double th) const{return 0.0;};
   // Non random term of the estimator I_{k+1, theta} as written in the paper
   // It is a double here, generally speaking should be a vector
-  double fixedTermLogDensityEstimate(const double& x0, const double& y, 
-                                     const double& Delta) const{
+  double fixedTermLogDensityEstimate(const double x0, const double y, 
+                                     const double Delta) const{
     double gradDeltaPot = gradThetaPotential(y) - gradThetaPotential(x0);
     return (gradDeltaPot - gradPsiLowerBound(theta) * Delta); 
   };
@@ -52,9 +52,9 @@ private:
     Rcpp::NumericVector tmp(skeletonTimes.size()); 
     skeleton = tmp;
   }
-  Rcpp::NumericVector simulSkelTimes(const unsigned int& skeletonSize, 
-                                       const double& startingTime,
-                                       const double& endingTime) const{
+  Rcpp::NumericVector simulSkelTimes(const unsigned int skeletonSize, 
+                                       const double startingTime,
+                                       const double endingTime) const{
     Rcpp::NumericVector output = Rcpp::runif(skeletonSize, startingTime,
                                              endingTime);
     std::sort(output.begin(), output.end());
@@ -62,8 +62,8 @@ private:
   };
   // Do the skeleton is accepted
   // all skeleton or one without begin, min, end?
-  bool skeletonAcceptance(const double& x0, const double& xF, const double& t0,
-                          const double& tF, 
+  bool skeletonAcceptance(const double x0, const double xF, const double t0,
+                          const double tF, 
                           const Rcpp::NumericVector& skeletonTimes, 
                           bool saveSkeleton = false){
     unsigned int skeletonSize = skeletonTimes.size();
@@ -89,8 +89,8 @@ private:
     return acceptedSkeleton;
   }
   // Exact conditional simulation at a random time
-  double randomTimeConditionalExactSim(const double& x0, const double& xF, 
-                                       const double& t0, const double& tF,
+  double randomTimeConditionalExactSim(const double x0, const double xF, 
+                                       const double t0, const double tF,
                                        const unsigned int maximalTries = 1000000){
     int tryNumber = 0;// reinitialize number of trials
     bool acceptedSkeleton = false;
@@ -136,7 +136,7 @@ private:
     return simulatedXu;
   }
   // Performing unconditional exact simulation, with a normal proposal
-  double unconditionalExactSim(const double& x0, const double& t0, const double& tF,
+  double unconditionalExactSim(const double x0, const double t0, const double tF,
                                const unsigned int maximalTries = 1000000){
     double Delta = tF - t0;
     double standardDev = sqrt(Delta);
@@ -176,7 +176,7 @@ private:
       std::cout << "BAD SIMULATION";
     return candidate;
   };
-  double getGPE2GammaTerm(const double& x0, const double& y, const double& Delta) const{
+  double getGPE2GammaTerm(const double x0, const double y, const double Delta) const{
     double trigoTerm = 0.0;
     if(x0 == y){
       trigoTerm = cos(x0) - cos(2 * x0);// Use of the derivative as limit when y = x
@@ -188,7 +188,7 @@ private:
   }
 public:
   // Construction method
-  SINEModel(const double& hiddenStateParam)
+  SINEModel(const double hiddenStateParam)
     : theta(hiddenStateParam){};
   // getter
   double getTheta() const{return theta;};
@@ -203,7 +203,7 @@ public:
     }
     return output;
   };
-  // double driftFun(const double& x) const{return sin(x - theta);};
+  // double driftFun(const double x) const{return sin(x - theta);};
   Rcpp::NumericVector drift(const Rcpp::NumericVector& x) const{
     unsigned int n = x.size();
     Rcpp::NumericVector output(n);
@@ -220,7 +220,7 @@ public:
     }
     return output;
   };
-  double fixedGPETerm(const double& x0, const double& y, const double& delta, bool logValue = false) const{
+  double fixedGPETerm(const double x0, const double y, const double delta, bool logValue = false) const{
     double logGaussianTerm = - 0.5 * (log(2 * M_PI * delta)  + (y - x0) * (y - x0) / delta);
     double logModelTerm = potentialUnit(y) - potentialUnit(x0) - delta * psiLowerBound;
     if(logValue)
@@ -228,9 +228,9 @@ public:
     else
       return exp(logGaussianTerm + logModelTerm);
   };
-  Rcpp::NumericVector simulateTrajectory(const double& x0,
+  Rcpp::NumericVector simulateTrajectory(const double x0,
                                          const Rcpp::NumericVector& simulationTimes,
-                                         const unsigned int& maximalTries = 100000){
+                                         const unsigned int maximalTries = 100000){
     unsigned int simulationSize = simulationTimes.size();
     Rcpp::NumericVector output(simulationSize); output.fill(x0);
     for(unsigned int i = 1; i < simulationSize; i++){
@@ -242,9 +242,9 @@ public:
   };// end of simulateTrajectory method
   //The rho_{\Delta_k} of Gloaguen et al. 2018
   
-  double unbiasedDensityEstimate(const double& x0, const double& xF, 
-                                 const double& t0, const double& tF, 
-                                 const unsigned int& sampleSize, const bool& GPE2 = false) const{
+  double unbiasedDensityEstimate(const double x0, const double xF, 
+                                 const double t0, const double tF, 
+                                 const unsigned int sampleSize, const bool GPE2 = false) const{
     double Delta = tF-t0;
     double randomGPETerm = 0.0;
     for(unsigned int i = 0; i < sampleSize; i++){
@@ -286,10 +286,10 @@ public:
     return fixedGPETerm(x0, xF, Delta) * randomGPETerm;
   };// end of unbiasedDensityEstimate method
   // Log density unbiased estimate, as defined by Olsson et al 2011
-  double unbiasedLogDensityEstimate(const double& x0, const double& xF, 
-                                    const double& t0, const double& tF,
-                                    const unsigned int& sampleSize, 
-                                    const unsigned int& maximalTries = 1000){
+  double unbiasedLogDensityEstimate(const double x0, const double xF, 
+                                    const double t0, const double tF,
+                                    const unsigned int sampleSize, 
+                                    const unsigned int maximalTries = 1000){
     double Delta = tF-t0;
     // We use here the equation B3 of  Olsson et al 2011, appendix B
     double fixedPart = fixedGPETerm(x0, xF, Delta, true);
@@ -300,10 +300,10 @@ public:
     }// end of loop over sampleSize
     return fixedPart + randomPart;
   };// end of unbiasedLogDensity method;
-  double unbiasedGradLogDensityEstimate(const double& x0, const double& xF, 
-                                        const double& t0, const double& tF,
-                                        const unsigned int& sampleSize, 
-                                        const unsigned int& maximalTries = 1000){
+  double unbiasedGradLogDensityEstimate(const double x0, const double xF, 
+                                        const double t0, const double tF,
+                                        const unsigned int sampleSize, 
+                                        const unsigned int maximalTries = 1000){
     double Delta = tF-t0;
     // We here the equation B3 of  Olsson et al 2011, appendix B
     double fixedPart = fixedTermLogDensityEstimate(x0, xF, Delta);

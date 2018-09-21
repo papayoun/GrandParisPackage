@@ -11,14 +11,14 @@ class SINE_POD{
 private:
   SINEModel model;
   double observationVariance;
-  double observationDensityUnit(const double& hiddenState, const double& observation) const{
+  double observationDensityUnit(double hiddenState, double observation) const{
     return GenericFunctions::dnorm(hiddenState, observation, pow(observationVariance, 0.5));};
 public:
-  SINE_POD(const SINEModel& SM, const double& variance)
+  SINE_POD(const SINEModel& SM, double variance)
     : model(SM), observationVariance(variance){}
-  SINE_POD(const double& theta, const double& variance)
+  SINE_POD(double theta, double variance)
     : model(theta), observationVariance(variance){}
-  Rcpp::List simulateHSandObs(const double& x0, const Rcpp::NumericVector& observationTimes){
+  Rcpp::List simulateHSandObs(double x0, const Rcpp::NumericVector& observationTimes){
     double standardDev = pow(observationVariance, 0.5);
     Rcpp::NumericVector hiddenStates = model.simulateTrajectory(x0, observationTimes);
     Rcpp::NumericVector observations = hiddenStates + Rcpp::rnorm(observationTimes.size(), 0, standardDev);
@@ -31,25 +31,25 @@ public:
   void setSigma2(const double newSigma2){observationVariance = newSigma2;};
   
   // Density, log density, gradiend functions
-  double unbiasedDensity(const double& x0, const double& xF, 
-                         const double& t0, const double& tF, 
-                         const unsigned int& sampleSize){
+  double unbiasedDensity(double x0, double xF, 
+                         double t0, double tF, 
+                         const unsigned int sampleSize){
     return model.unbiasedDensityEstimate(x0, xF, t0, tF, sampleSize, false);
   }
-  double unbiasedLogDensity(const double& x0, const double& xF, 
-                             const double& t0, const double& tF,
-                             const unsigned int& sampleSize){
+  double unbiasedLogDensity(double x0, double xF, 
+                             double t0, double tF,
+                             const unsigned int sampleSize){
     return model.unbiasedLogDensityEstimate(x0, xF, t0, tF, sampleSize, 1000);
   }
-  double unbiasedGradLogDensity(const double& x0, const double& xF, 
-                                const double& t0, const double& tF,
-                                const unsigned int& sampleSize){
+  double unbiasedGradLogDensity(double x0, double xF, 
+                                double t0, double tF,
+                                const unsigned int sampleSize){
     return model.unbiasedGradLogDensityEstimate(x0, xF, t0, tF, sampleSize, 1000);
   }
-  double observationDensity(const double& hiddenState, const double& observation) const{
+  double observationDensity(double hiddenState, double observation) const{
     return observationDensityUnit(hiddenState, observation);
   };
-  Rcpp::NumericVector observationDensity(const Rcpp::NumericVector& hiddenStates, const double& observation) const{
+  Rcpp::NumericVector observationDensity(const Rcpp::NumericVector& hiddenStates, double observation) const{
     unsigned int particleSize = hiddenStates.size();
     Rcpp::NumericVector output(particleSize);
     // for(unsigned int i = 0; i < particleSize; i++){
@@ -58,7 +58,7 @@ public:
     output = Rcpp::dnorm(hiddenStates, observation, pow(observationVariance, 0.5));
     return output;
   }
-  Rcpp::NumericVector gradObservationDensity(const double& hiddenState, const double& observation) const{
+  Rcpp::NumericVector gradObservationDensity(double hiddenState, double observation) const{
     Rcpp::NumericVector output(2); output.fill(0);// The first term corresponds to theta and is null
     // -dnorm()/sigma
     double gaussTerm = observationDensityUnit(hiddenState, observation); 
@@ -66,17 +66,26 @@ public:
     output[1] =  gaussTerm * (quadrTerm / observationVariance - 1) / (2 * observationVariance);
     return output;
   }
-  Rcpp::NumericVector gradLogObservationDensity(const double& hiddenState, const double& observation) const{
+  Rcpp::NumericVector gradLogObservationDensity(double hiddenState, double observation) const{
     Rcpp::NumericVector output(2); output.fill(0);// The first term corresponds to theta and is null
     double quadrTerm = (hiddenState - observation) * (hiddenState - observation);
     output[1] =  (quadrTerm / observationVariance - 1) / (2 * observationVariance);
     return output;
   }
-  Rcpp::NumericVector gradLogTransitionDensity(const double& oldParticle, const double& newParticle,
-                                         const double& t0, const double& tF, 
-                                         const unsigned int& sampleSize, const unsigned int& maximalTries = 1000){
+  Rcpp::NumericVector gradLogTransitionDensity(double oldParticle, double newParticle,
+                                         double t0, double tF, 
+                                         const unsigned int sampleSize, const unsigned int maximalTries = 1000){
     Rcpp::NumericVector output(2); output.fill(0);// The second term corresponds to Sigma2 and is null
     output[0] = model.unbiasedGradLogDensityEstimate(oldParticle, newParticle, t0, tF, sampleSize, maximalTries);
+    return output;
+  }
+  Rcpp::NumericVector gradObsDensityGeometricMean(const Rcpp::NumericVector& particles,
+                                                  double observation){
+    Rcpp::NumericVector output(2);
+    output.fill(0);
+    double meanSquare = Rcpp::mean((particles - observation) * (particles - observation));
+    double gaussTerm = pow(2 * M_PI * observationVariance, -0.5) * exp(-meanSquare / (2 * observationVariance) );
+    output[1] = (meanSquare / observationVariance - 1) / (2 * observationVariance) * gaussTerm ;
     return output;
   }
   Rcpp::NumericVector getParams() const{
@@ -85,7 +94,7 @@ public:
     output[1] = getSigma2();
     return output;
   }
-  void setParams(const double& newTheta, const double& newSigma2){
+  void setParams(double newTheta, double newSigma2){
     model.setTheta(newTheta);
     setSigma2(newSigma2);
   }
@@ -104,6 +113,7 @@ RCPP_MODULE(SINEModel_Module) {
     .method("density", &SINE_POD::unbiasedDensity)
     .method("logDensity", &SINE_POD::unbiasedLogDensity)
     .method("gradLogDensity", &SINE_POD::unbiasedGradLogDensity)
+    .method("gradDensity", &SINE_POD::gradObsDensityGeometricMean)
   ;
 }
 

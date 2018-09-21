@@ -33,10 +33,12 @@ BEGIN_RCPP
 END_RCPP
 }
 
+RcppExport SEXP _rcpp_module_boot_ProposalModel_Module();
 RcppExport SEXP _rcpp_module_boot_SINEModel_Module();
 
 static const R_CallMethodDef CallEntries[] = {
     {"_GrandParisPackage_fastTangOR", (DL_FUNC) &_GrandParisPackage_fastTangOR, 16},
+    {"_rcpp_module_boot_ProposalModel_Module", (DL_FUNC) &_rcpp_module_boot_ProposalModel_Module, 0},
     {"_rcpp_module_boot_SINEModel_Module", (DL_FUNC) &_rcpp_module_boot_SINEModel_Module, 0},
     {NULL, NULL, 0}
 };

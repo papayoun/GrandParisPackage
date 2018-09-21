@@ -52,54 +52,79 @@ private:
   };
   void initializeBackwardSampling(unsigned int ancestorIndex){
     backwardSamplingCounter = 0;
-    backwardIndexCandidates = GenericFunctions::sampleReplace(particleIndexes, numberOfSampledJs, particleFilteringWeights(Rcpp::_, ancestorIndex));
+    Rcpp::NumericVector weights = particleFilteringWeights(Rcpp::_, ancestorIndex);
+    backwardIndexCandidates = GenericFunctions::sampleReplace(particleIndexes, numberOfSampledJs, weights);
   }
   void setInitalParticles(){
-    particleSet(Rcpp::_, 0) = propModel.simulateInitialParticle(particleSize, observations[0]);
-    Rcpp::NumericVector unNormedWeights = propModel.evalInitialDensity(particleSet(Rcpp::_, 0), observations[0]);
+    Rcpp::NumericVector firstParticles = propModel.simulateInitialParticle(particleSize, observations[0]);
+    particleSet(Rcpp::_, 0) = firstParticles;
+    Rcpp::NumericVector unNormedWeights = propModel.evalInitialDensity(firstParticles, observations[0]);
     particleFilteringWeights(Rcpp::_, 0) = normWeights(unNormedWeights);
   };
   // Propagation method
-  void propagateParticles(const unsigned int& ancestorIndex){
+  void propagateParticles(const unsigned int& ancestorIndex, bool pureRW = false){
     double t0 = observationTimes[ancestorIndex];
     double tF = observationTimes[ancestorIndex + 1];
     double Delta = tF - t0;
-    Rcpp::IntegerVector selectedIndexes = GenericFunctions::sampleReplace(particleIndexes, particleSize,
-                                                                   particleFilteringWeights(Rcpp::_, ancestorIndex));
+    Rcpp::NumericVector currentWeights = particleFilteringWeights(Rcpp::_, ancestorIndex);
+    Rcpp::IntegerVector selectedIndexes = GenericFunctions::sampleReplace(particleIndexes, 
+                                                                          particleSize,
+                                                                          currentWeights);
     Rcpp::NumericVector selectedParticles(particleSize);
     for(unsigned int i =0; i < particleSize; i++){
       selectedParticles[i] = particleSet(selectedIndexes[i], ancestorIndex);
     }
     double futureObs = observations[ancestorIndex + 1];
-    particleSet(Rcpp::_, ancestorIndex + 1)  = propModel.simulateNextParticle(selectedParticles, futureObs, Delta, true);
-    Rcpp::NumericVector proposalDensityValues = propModel.densityNextParticle(selectedParticles, particleSet(Rcpp::_, ancestorIndex + 1), futureObs, Delta);
-    Rcpp::NumericVector transitionDensityValues = propModel.evalTransitionDensity(selectedParticles, particleSet(Rcpp::_, ancestorIndex + 1),
-                                                                            t0, tF, densitySampleSize, true);// the true is to use GPE2
-    observationDensityValues = propModel.evalObservationDensity(particleSet(Rcpp::_, ancestorIndex + 1), futureObs);
+    Rcpp::NumericVector newParts = propModel.simulateNextParticle(selectedParticles, futureObs, Delta, pureRW);
+    particleSet(Rcpp::_, ancestorIndex + 1)   = newParts;
+    Rcpp::NumericVector proposalDensityValues = propModel.densityNextParticle(selectedParticles, 
+                                                                              newParts, 
+                                                                              futureObs, Delta, pureRW);
+    Rcpp::NumericVector transitionDensityValues = propModel.evalTransitionDensity(selectedParticles, 
+                                                                                  newParts,
+                                                                            t0, tF, densitySampleSize, pureRW);// the true is to use GPE2
+    observationDensityValues = propModel.evalObservationDensity(newParts, futureObs);
     // observationDensityValues is an attribute and therefore is stocked for zetaUpdate
+    
+    //////////// DEBUG LINES
+    // Rcpp::NumericVector newParts = particleSet(Rcpp::_, ancestorIndex+1);
+    // DebugMethods::debugprint(newParts, newParts", false);
+    // Rcpp::NumericVector newOD = Rcpp::dnorm(newParts, futureObs, pow(propModel.getParams()[1], 0.5));
+    // DebugMethods::debugprint(newOD, "newOD", false);
+    // DebugMethods::debugprint(particleSet, "particleSet");
+    // DebugMethods::debugprint(transitionDensityValues, "transDens", false);
+    // DebugMethods::debugprint(observationDensityValues, "obsDens", false);
+    ///////////// END DEBUG
     Rcpp::NumericVector unNormedWeights = transitionDensityValues * observationDensityValues / proposalDensityValues;
     particleFilteringWeights(Rcpp::_, ancestorIndex + 1) = normWeights(unNormedWeights);
   };
   void setDensityUpperBound(const unsigned int& childIndex, const unsigned int& particleIndex){
     double currentChild = particleSet(particleIndex, childIndex);
-    Rcpp::NumericVector fixedGPETerms = propModel.getFixedGPETerms(particleSet(Rcpp::_, childIndex - 1), currentChild, observationTimes[childIndex] - observationTimes[childIndex - 1]);
+    Rcpp::NumericVector ancestorParts = particleSet(Rcpp::_, childIndex - 1);
+    double delta = observationTimes[childIndex] - observationTimes[childIndex - 1]; 
+    Rcpp::NumericVector fixedGPETerms = propModel.getFixedGPETerms(ancestorParts,
+                                                                   currentChild, 
+                                                                   delta);
     densityUpperBound = max(fixedGPETerms);
   };// By quadratic method
   unsigned int getBackwardIndex(const unsigned int& childIndex, const unsigned int& particleIndex){
     bool acceptedBackwardIndex = false;
     unsigned int tryBSCounter = 0;
     unsigned int ancestorIndexCandidate = -1;
+    Rcpp::NumericVector backwardWeights = particleFilteringWeights(Rcpp::_, childIndex - 1);
     while((!acceptedBackwardIndex) & (tryBSCounter < backwardSamplingMaxTry)){
       if(backwardSamplingCounter == numberOfSampledJs){// IF Js values have been tested, try again
-        backwardIndexCandidates = GenericFunctions::sampleReplace(particleIndexes, numberOfSampledJs, particleFilteringWeights(Rcpp::_, childIndex - 1));
+        backwardIndexCandidates = GenericFunctions::sampleReplace(particleIndexes, numberOfSampledJs, backwardWeights);
         backwardSamplingCounter = 0;
       }
       ancestorIndexCandidate = backwardIndexCandidates[backwardSamplingCounter];
       double u = Rcpp::runif(1, 0, 1)[0];
-      double sampledQEstimate = propModel.evalTransitionDensity(particleSet(ancestorIndexCandidate, childIndex - 1),//x0
-                                                                particleSet(particleIndex, childIndex),//xF
+      double ancestor = particleSet(ancestorIndexCandidate, childIndex - 1);
+      double child = particleSet(particleIndex, childIndex);
+      double sampledQEstimate = propModel.evalTransitionDensity(ancestor,//x0
+                                                                child ,//xF
                                                                 observationTimes[childIndex - 1], //t0
-                                                                                observationTimes[childIndex], densitySampleSize);
+                                                                observationTimes[childIndex], densitySampleSize);
       acceptedBackwardIndex = (u < sampledQEstimate / densityUpperBound);
       tryBSCounter += 1;
       backwardSamplingCounter +=1;
@@ -127,6 +152,7 @@ private:
                                                                                  observationTimes[childIndex],
                                                                                  logDensitySampleSize, skeletonSimulationMaxTry);
     Rcpp::NumericVector gradLogObsDensityTerm =  propModel.evalGradLogObservationDensity(particleSet(childParticleIndex, childIndex), observations[childIndex]);
+    // gradLogObsDensityTerm.fill(0);
     Rcpp::NumericVector updateTerm = (tauTangentFilter[childIndex - 1](ancestorParticleIndex, Rcpp::_)
       + sampledGradLogQ
       + gradLogObsDensityTerm) / backwardSampleSize;
@@ -135,25 +161,15 @@ private:
   };
   Rcpp::NumericVector getTauBar(const unsigned int&  childIndex){
     return(colMeans(tauTangentFilter[childIndex]));
-    // Rcpp::NumericVector output(2);
-    // for(int j = 0; j < particleSize; j++){
-    //   double weight = particleFilteringWeights(j, childIndex);
-    //   output(0) +=  tauTangentFilter[childIndex](j, 0) * weight;
-    //   output(1) +=  tauTangentFilter[childIndex](j, 1) * weight;
-    // }
-    // return output;
   }
   void updateZetas(const unsigned int& ancestorIndex){
-    zeta1.fill(0); zeta2.fill(0);
+    zeta1.fill(0);
+    zeta2.fill(0);
     Rcpp::NumericVector tauBar = getTauBar(ancestorIndex + 1);
-    DebugMethods::debugprint(tauBar, "taubar", false);
-    // Rcpp::NumericVector gradDens(particleSize);
-    // Rcpp::NumericVector gradLogDens(particleSize);
+    DebugMethods::debugprint(tauBar, "tauBar", false);
     double currentObs = observations[ancestorIndex + 1];
     for(unsigned int j = 0; j < particleSize; j++){
       double currentParticle = particleSet(j, ancestorIndex + 1);
-      // gradDens(j) =  propModel.evalGradObservationDensity(currentParticle, currentObs)[1];
-      // gradLogDens(j) = propModel.evalGradLogObservationDensity(currentParticle, currentObs)[1];
       zeta1 += propModel.evalGradObservationDensity(currentParticle, currentObs) / particleSize;
       zeta2 += (tauTangentFilter[ancestorIndex + 1](j, Rcpp::_) - tauBar) * observationDensityValues[j] / particleSize; //* particleFilteringWeights(j, ancestorIndex + 1);
     }
@@ -182,9 +198,6 @@ private:
   }
   Rcpp::NumericVector getGradientUpdate(const unsigned int& ancestorIndex, const unsigned int& updateNumber){
     updateZetas(ancestorIndex);
-    // DebugMethods::debugprint(zeta1, "zeta1", false);
-    // DebugMethods::debugprint(zeta2, "zeta2", false);
-    // std::cout << "zeta3" << zeta3 << std::endl; 
     Rcpp::NumericVector zetaVector = (zeta1 + zeta2) / zeta3;
     // Rcpp::NumericVector gradientDirection = getDirection(zetaVector);
     if(updateNumber == 0){
@@ -196,7 +209,7 @@ private:
     return gradientStep * zetaVector;
   }
   Rcpp::NumericVector getNewParam(Rcpp::NumericVector& gradientUpdate,
-                                  double sigmaThresh = 0.1) const{
+                                  double sigmaThresh = 0.0001) const{
     bool conditionSigma = false;
     Rcpp::NumericVector output(2);
     while(!(conditionSigma)){
@@ -256,8 +269,9 @@ public:
         }
       }
     }
+    Rcpp::NumericVector lastWeights = particleFilteringWeights(Rcpp::_, observationSize - 1);
     for(int m = 0; m < newParamSize; m++){
-      output[m] = sum(particleFilteringWeights(Rcpp::_, observationSize - 1) * tauEStep[m](Rcpp::_, observationSize - 1));
+      output[m] = sum(lastWeights * tauEStep[m](Rcpp::_, observationSize - 1));
     }
     return output;
   };// end of evalEstep method;
@@ -269,14 +283,14 @@ public:
     setInitalParticles();
     unsigned int updateCounter = 0;
     for(int k = 0; k < (observationSize - 1); k++){
-      // DebugMethods::debugprint(propModel.getParams(), "Current Param", false);
-      DebugMethods::debugprint(tauTangentFilter[k], "TauK");
-      DebugMethods::debugprint(tauTangentFilter[k + 1], "TauK + 1 ");
+      std::cout << "iteration " << k << std::endl;
+      DebugMethods::debugprint(propModel.getParams(), "Current Param", false);
       gradientStep = gradientSteps(k, Rcpp::_);
       propagateParticles(k);
       initializeBackwardSampling(k);// Samples of ancestor index is made here
       for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
         setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
+        // std::cout << "particle " << i << std::endl; 
         for(unsigned int l = 0; l < backwardSampleSize; l++){
           int chosenAncestorIndex = getBackwardIndex(k + 1, i);
           updateTauTangentFilter(k + 1, i, chosenAncestorIndex, updateOrders[k]);
@@ -286,7 +300,7 @@ public:
       if(updateOrders[k]){
         // std::cout << "Iteration " << k << std::endl;
         Rcpp::NumericVector newGradientUpdate = getGradientUpdate(k, updateCounter);
-        DebugMethods::debugprint(newGradientUpdate, "Gradient", false);
+        // DebugMethods::debugprint(newGradientUpdate, "Gradient", false);
         Rcpp::NumericVector newParams = getNewParam(newGradientUpdate);
         propModel.setParams(newParams);
         updateCounter += 1;
