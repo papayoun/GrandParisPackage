@@ -100,7 +100,7 @@ public:
     }  
     return output;
   }
-  double evalTransitionDensity(double oldParticle, double newParticle,
+  double evalTransitionDensityUnit(double oldParticle, double newParticle,
                                double t0, double tF, 
                                unsigned int sampleSize, bool GPE2 = false) const{
     return trueModel.getModel().unbiasedDensityEstimate(oldParticle, newParticle, t0, tF, sampleSize, GPE2);
@@ -110,7 +110,7 @@ public:
     unsigned int particleSize = oldParticles.size();
     Rcpp::NumericVector output(particleSize);
     for(unsigned int i = 0; i < particleSize; i++){
-      output[i] = evalTransitionDensity(oldParticles[i], newParticles[i], t0, tF, sampleSize, GPE2);
+      output[i] = evalTransitionDensityUnit(oldParticles[i], newParticles[i], t0, tF, sampleSize, GPE2);
     }
     return output;
   };

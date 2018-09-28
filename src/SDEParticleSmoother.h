@@ -121,7 +121,7 @@ private:
       double u = Rcpp::runif(1, 0, 1)[0];
       double ancestor = particleSet(ancestorIndexCandidate, childIndex - 1);
       double child = particleSet(particleIndex, childIndex);
-      double sampledQEstimate = propModel.evalTransitionDensity(ancestor,//x0
+      double sampledQEstimate = propModel.evalTransitionDensityUnit(ancestor,//x0
                                                                 child ,//xF
                                                                 observationTimes[childIndex - 1], //t0
                                                                 observationTimes[childIndex], densitySampleSize);
@@ -309,24 +309,5 @@ public:
     }
     return output;
   };// end of evalEstep method;
-  void print() const{
-    // std::cout << "Particle size:" << particleSize << std::endl;
-    // // DebugMethods::debugprint(particleIndexes, "Particle indexes");
-    // DebugMethods::debugprint(observations, "Observations", false);
-    // DebugMethods::debugprint(observationTimes, "ObservationsTimes", false);
-    // std::cout << "Observation size:" << observationSize << std::endl;
-    // // to be updated attributes
-    // DebugMethods::debugprint(observationDensityValues , "ObservationsDensityValues", false);
-    // DebugMethods::debugprint(particleSet, "particleSet");
-    // DebugMethods::debugprint(particleFilteringWeights, "particleWeights");
-    // std::cout << "Tau size:" << tauTangentFilter.size() << std::endl;
-    DebugMethods::debugprint(propModel.getParams(), false);
-    // std::vector<Rcpp::NumericMatrix> tauTangentFilter;
-    // ProposalSINEModel propModel;
-    // Rcpp::NumericVector zeta1, zeta2;// Conform to paper notations
-    // double zeta3;
-    // Rcpp::NumericVector oldGradient;
-    // Rcpp::NumericVector gradientStep;
-  }
 };
 #endif

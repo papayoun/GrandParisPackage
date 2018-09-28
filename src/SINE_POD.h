@@ -14,6 +14,8 @@ private:
   double observationDensityUnit(double hiddenState, double observation) const{
     return GenericFunctions::dnorm(hiddenState, observation, pow(observationVariance, 0.5));};
 public:
+  SINE_POD()
+    : model(0.0), observationVariance(1.0){}
   SINE_POD(const SINEModel& SM, double variance)
     : model(SM), observationVariance(variance){}
   SINE_POD(double theta, double variance)
