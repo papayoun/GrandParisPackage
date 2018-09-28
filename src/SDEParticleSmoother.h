@@ -39,10 +39,12 @@ private:
   Rcpp::NumericVector normWeights(Rcpp::NumericVector unNormedWeights) const{return unNormedWeights / sum(unNormedWeights);};
   // Initialization methodes
   void initializeTauEStep(const unsigned int numberModels){
+    std::vector<Rcpp::NumericMatrix>  initial(numberModels);
     for(unsigned int i = 0; i < numberModels; i++){
       Rcpp::NumericMatrix zeroMatrix(particleSize, observationSize); zeroMatrix.fill(0);
-      tauEStep[i] = zeroMatrix;
+      initial[i] = zeroMatrix;
     }
+    tauEStep = initial;
   };
   void initializeTauTangentFilter(){
     for(unsigned int i = 0; i < observationSize; i++){

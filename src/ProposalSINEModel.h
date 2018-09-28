@@ -18,7 +18,6 @@ private:
   }
   // In the SINE model case, length 2. Equals 1 if the parameter is to estimate, 0 if it is known
   double getKalmanVariance(double Delta) const{
-    std::cout << " around obs variance" << aroundObsVariance;
     double randomWalkVariance = randomWalkStandDev * randomWalkStandDev * Delta;
     return randomWalkVariance * aroundObsVariance / (randomWalkVariance + aroundObsVariance);
   }
@@ -75,10 +74,8 @@ public:
     unsigned int particleSize = oldParticles.size();
     Rcpp::NumericVector output(particleSize);
     double kalmanVariance = getKalmanVariance(Delta);
-    std::cout << "variance simu " << kalmanVariance << std::endl;
     Rcpp::NumericVector kalmanMeans = getKalmanMeans(oldParticles, newObservation, 
                                                      Delta, kalmanVariance, pureRandomWalk);
-    DebugMethods::debugprint(kalmanMeans, "means", true);
     for(unsigned int i = 0; i < particleSize; i++){
       output[i] = Rcpp::rnorm(1, kalmanMeans[i], sqrt(kalmanVariance))[0];
     }  

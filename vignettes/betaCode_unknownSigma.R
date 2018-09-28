@@ -2,13 +2,13 @@ rm(list = ls())
 library(GrandParisPackage)
 library(parallel)
 set.seed(1)
-trueTheta <- pi / 4; trueSigma2 <- 0.2;
-n <- 10; times <- seq(0, by = 2, length = n);
+trueTheta <- pi / 4; trueSigma2 <- 1;
+n <- 200; times <- seq(0, by = 2, length = n);
 estTheta = T; estSig = F; updateOrders <- rep(T, n)
 firstStep <- 0.5
 nStart <- floor(n / 6)
 stepsTheta <- c(rep(firstStep, nStart), firstStep * (1:(n - nStart))^(-0.5000001))
-stepsSigma <- 1 * (1:n)^(-0.6)
+stepsSigma <- 1 * (1:n)^(-0.6) / 100
 gradientSteps   <- cbind(stepsTheta, stepsSigma)
 SINEprocess <- SINE_simulate(trueTheta, trueSigma2, 10, times = times)
 observations <- SINEprocess[, "observations"]
@@ -28,7 +28,7 @@ RW <- 1
 #   return(quantities)
 # }
 Res <- fastTangOR(observations[1:indFin], times[1:indFin], backwardSampleSize = 2,
-                  thetaModel = pi, sigma2 = trueSigma2, particleSize = 250,
+                  thetaModel = pi, sigma2 = trueSigma2 + 1, particleSize = 100,
                   updateOrders = updateOrders, gradientSteps = gradientSteps, 
                   all = T, estimateSigma2 = T, estimateTheta = T, randomWalkParam = RW)
 # oneRes <- Res

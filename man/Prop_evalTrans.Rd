@@ -4,7 +4,7 @@
 \alias{Prop_evalTrans}
 \title{Simulate a SINE process}
 \usage{
-Prop_evalTrans(oldParticles, newParticles, delta = 1, RW = 1,
+Prop_evalTrans(oldParticles, newParticles, obs, delta = 1, RW = 1,
   theta = 3.14, sigma2 = 1)
 }
 \arguments{

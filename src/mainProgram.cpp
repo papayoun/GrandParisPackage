@@ -79,14 +79,15 @@ Rcpp::NumericMatrix GEM(const Rcpp::NumericVector& observations,
                const unsigned int skeletonSimulationMaxTry = 10000000,
                const bool estimateTheta = true, const bool estimateSigma2 = true){
   Rcpp::NumericMatrix output(nIterations + 1, 2);
+  output.fill(sigma2Start);
   output(0, 0) = thetaStart;
-  output(0, 1) = sigma2Start;
   for(unsigned int iter = 1; iter < nIterations + 1; iter++){
     SINE_POD startModel(output(iter - 1, 0), output(iter - 1, 1));
     std::vector<SINE_POD> testedModels(nModels + 1);
     testedModels[0] = startModel;
     for(int i = 1; i < (nModels + 1); i++){
-      testedModels[i] = generateModel(output(iter - 1, 0), output(iter - 1, 1), 1.0 / iter);
+      SINE_POD tmp = generateModel(output(iter - 1, 0), output(iter - 1, 1), 1.0 / iter);
+      testedModels[i] = tmp;
     }
     ProposalSINEModel propModel(randomWalkParam, startModel, estimateTheta, estimateSigma2);
     SDEParticleSmoother mySmoother(observations, observationTimes,  propModel,
