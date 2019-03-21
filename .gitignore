@@ -8,3 +8,6 @@ src/*.dll
 inst/doc
 vignettes/simulatedResults
 vignettes/*_cache
+vignettes/*_files
+vignettes/test_*.R
+*.Rproj

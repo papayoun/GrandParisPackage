@@ -168,15 +168,15 @@ private:
     zeta1.fill(0);
     zeta2.fill(0);
     Rcpp::NumericVector tauBar = getTauBar(ancestorIndex + 1);
-    DebugMethods::debugprint(tauBar, "tauBar", false);
+    // DebugMethods::debugprint(tauBar, "tauBar", false);
     double currentObs = observations[ancestorIndex + 1];
     for(unsigned int j = 0; j < particleSize; j++){
       double currentParticle = particleSet(j, ancestorIndex + 1);
       zeta1 += propModel.evalGradObservationDensity(currentParticle, currentObs) / particleSize;
       zeta2 += (tauTangentFilter[ancestorIndex + 1](j, Rcpp::_) - tauBar) * observationDensityValues[j] / particleSize; //* particleFilteringWeights(j, ancestorIndex + 1);
     }
-    DebugMethods::debugprint(zeta1, "zeta1", false);
-    DebugMethods::debugprint(zeta2, "zeta2", false);
+    // DebugMethods::debugprint(zeta1, "zeta1", false);
+    // DebugMethods::debugprint(zeta2, "zeta2", false);
     zeta3 = Rcpp::mean(observationDensityValues);
   }
   void updateGradientStep(const Rcpp::NumericVector& currentGradient){
@@ -285,8 +285,8 @@ public:
     setInitalParticles();
     unsigned int updateCounter = 0;
     for(int k = 0; k < (observationSize - 1); k++){
-      std::cout << "iteration " << k << std::endl;
-      DebugMethods::debugprint(propModel.getParams(), "Current Param", false);
+      // std::cout << "iteration " << k << std::endl;
+      // DebugMethods::debugprint(propModel.getParams(), "Current Param", false);
       gradientStep = gradientSteps(k, Rcpp::_);
       propagateParticles(k);
       initializeBackwardSampling(k);// Samples of ancestor index is made here
