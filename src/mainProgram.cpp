@@ -82,6 +82,7 @@ Rcpp::NumericMatrix GEM(const Rcpp::NumericVector& observations,
   output.fill(sigma2Start);
   output(0, 0) = thetaStart;
   for(unsigned int iter = 1; iter < nIterations + 1; iter++){
+    std::cout << "iteration " << iter << std::endl;
     SINE_POD startModel(output(iter - 1, 0), output(iter - 1, 1));
     std::vector<SINE_POD> testedModels(nModels + 1);
     testedModels[0] = startModel;

@@ -19,6 +19,7 @@ private:
   std::vector<Rcpp::NumericMatrix> tauTangentFilter;
   ProposalSINEModel propModel;
   Rcpp::NumericVector zeta1, zeta2;// Conform to paper notations
+  double sum_IS_weights;
   double zeta3;
   Rcpp::NumericVector oldGradient;
   Rcpp::NumericVector gradientStep;
@@ -135,6 +136,13 @@ private:
       std::cout << "At the observation index " << childIndex << ", no ancestor was accepted for particle" << particleIndex << std::endl;
     return ancestorIndexCandidate;
   };
+  unsigned int getBackwardIndex_IS(const unsigned int& childIndex, const unsigned int& particleIndex){
+    Rcpp::NumericVector backwardWeights = particleFilteringWeights(Rcpp::_, childIndex - 1);
+    unsigned int ancestor = GenericFunctions::sampleReplace(particleIndexes,
+                                                            1,
+                                                            backwardWeights)(0);
+    return ancestor;
+  };
   void updateTauEStep(const unsigned int& childIndex, const unsigned int& childParticleIndex,
                       const unsigned int& ancestorParticleIndex, const std::vector<SINE_POD>& testedModels){
     for(unsigned int m = 0; m < testedModels.size(); m++){
@@ -144,6 +152,28 @@ private:
                                           observationTimes[childIndex - 1], observationTimes[childIndex], logDensitySampleSize, skeletonSimulationMaxTry);
       double logObsDensityTerm =  log(model.observationDensity(particleSet(childParticleIndex, childIndex), observations[childIndex]));
       tauEStep[m](childParticleIndex, childIndex) += (tauEStep[m](ancestorParticleIndex, childIndex - 1) + sampledLogQ + logObsDensityTerm) / backwardSampleSize;
+    }
+  };
+  void updateTauEStep_IS(const unsigned int& childIndex, 
+                         const unsigned int& childParticleIndex,
+                        const unsigned int& ancestorParticleIndex,
+                        const std::vector<SINE_POD>& testedModels){
+    double sampledQ = propModel.evalTransitionDensityUnit(particleSet(ancestorParticleIndex, childIndex - 1),
+                                                          particleSet(childParticleIndex, childIndex),
+                                                          observationTimes(childIndex - 1), 
+                                                          observationTimes(childIndex),
+                                                          densitySampleSize);
+    sum_IS_weights += sampledQ;
+    for(unsigned int m = 0; m < testedModels.size(); m++){
+      SINE_POD model = testedModels[m];
+      double sampledLogQ = model.getModel().unbiasedLogDensityEstimate(particleSet(ancestorParticleIndex, childIndex - 1),
+                                          particleSet(childParticleIndex, childIndex),
+                                          observationTimes(childIndex - 1),
+                                          observationTimes(childIndex), 
+                                          logDensitySampleSize, skeletonSimulationMaxTry);
+      double logObsDensityTerm =  log(model.observationDensity(particleSet(childParticleIndex, childIndex),
+                                                               observations(childIndex)));
+      tauEStep[m](childParticleIndex, childIndex) += sampledQ * (tauEStep[m](ancestorParticleIndex, childIndex - 1) + sampledLogQ + logObsDensityTerm);
     }
   };
   void updateTauTangentFilter(const unsigned int& childIndex, const unsigned int& childParticleIndex,
@@ -261,13 +291,18 @@ public:
     setInitalParticles();
     for(int k = 0; k < (observationSize - 1);k++){
       propagateParticles(k);
-      initializeBackwardSampling(k);// Samples of ancestor index is made here
+      // initializeBackwardSampling(k);// Samples of ancestor index is made here
       for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
-        setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
+        // setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
+        sum_IS_weights = 0;
         for(unsigned int l = 0; l < backwardSampleSize; l++){
-          int chosenAncestorIndex = getBackwardIndex(k + 1, i);
-          updateTauEStep(k + 1, i, chosenAncestorIndex, testedModels);
+          int chosenAncestorIndex = getBackwardIndex_IS(k + 1, i);
+          updateTauEStep_IS(k + 1, i, chosenAncestorIndex, testedModels);
           //k + 1 is the time index from which the backward is done, i is the corresponding particle of this generation
+        }
+        // Normalization by importance weights
+        for(unsigned int m; m < newParamSize; m++){
+          tauEStep[m](k + 1, i) /= sum_IS_weights;
         }
       }
     }
