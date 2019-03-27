@@ -3,7 +3,7 @@ library(parallel)
 # seed <- 122
 # set.seed(seed)
 trueTheta <- pi / 4; trueSigma2 <- 1;
-n <- 2; times <- seq(0, to = 0.5, length = n);
+n <- 5; times <- seq(0, to = 2, length = n);
 SINEprocess <- SINE_simulate(trueTheta, trueSigma2, 10, times = times)
 observations <- SINEprocess[, "observations"]
 n_case <- 1
@@ -11,11 +11,11 @@ allRes <- mclapply(1:n_case, function(i){
   thetaStart <- runif(1, 0, 2 * pi)
   sigma2Start <- runif(1, 0.2, 2)
   myTry <- GEM(observations = observations, observationTimes = times, thetaStart = thetaStart, 
-               particleSize = 5, backwardSampleSize = 5000,
+               particleSize = 5, backwardSampleSize = 50,
                sigma2Start = sigma2Start, nIterations = 1, nModels = 1)
   print("%%%%%%%%%%%% AUTRE %%%%%%%%%%%%")
   myTry2 <- GEM_IS(observations = observations, observationTimes = times, thetaStart = thetaStart, 
-               particleSize = 5, backwardSampleSize = 5000,
+               particleSize = 5, backwardSampleSize = 50,
                sigma2Start = sigma2Start, nIterations = 1, nModels = 1)
   colnames(myTry) = c("theta", "sigma2")
   myTry

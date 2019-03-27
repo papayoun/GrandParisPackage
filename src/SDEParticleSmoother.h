@@ -159,23 +159,19 @@ private:
   void updateTauEStep_IS(const unsigned int& childIndex, 
                          const unsigned int& childParticleIndex,
                         const unsigned int& ancestorParticleIndex,
+                        const double IS_weight,
                         const std::vector<SINE_POD>& testedModels){
-    double sampledQ = propModel.evalTransitionDensityUnit(particleSet(ancestorParticleIndex, childIndex - 1),
-                                                          particleSet(childParticleIndex, childIndex),
-                                                          observationTimes(childIndex - 1), 
-                                                          observationTimes(childIndex),
-                                                          densitySampleSize);
-    sum_IS_weights += sampledQ;
     for(unsigned int m = 0; m < testedModels.size(); m++){
       SINE_POD model = testedModels[m];
       double sampledLogQ = model.getModel().unbiasedLogDensityEstimate(particleSet(ancestorParticleIndex, childIndex - 1),
                                           particleSet(childParticleIndex, childIndex),
                                           observationTimes(childIndex - 1),
                                           observationTimes(childIndex), 
-                                          logDensitySampleSize, skeletonSimulationMaxTry);
+                                          logDensitySampleSize, 
+                                          skeletonSimulationMaxTry);
       double logObsDensityTerm =  log(model.observationDensity(particleSet(childParticleIndex, childIndex),
                                                                observations(childIndex)));
-      tauEStep[m](childParticleIndex, childIndex) += sampledQ * (tauEStep[m](ancestorParticleIndex, childIndex - 1) +
+      tauEStep[m](childParticleIndex, childIndex) += IS_weight * (tauEStep[m](ancestorParticleIndex, childIndex - 1) +
                                                                   sampledLogQ + logObsDensityTerm);
     }
   };
@@ -305,11 +301,11 @@ public:
         }
       }
     }
-    for(unsigned int m; m < newParamSize; m++){
-      std::cout << "m = " << m << std::endl;
-      Rcpp::NumericMatrix taus = tauEStep[m];
-      DebugMethods::debugprint(taus, "taus_MC");
-    }
+    // for(unsigned int m; m < newParamSize; m++){
+    //   std::cout << "m = " << m << std::endl;
+    //   Rcpp::NumericMatrix taus = tauEStep[m];
+    //   DebugMethods::debugprint(taus, "taus_MC");
+    // }
     Rcpp::NumericVector lastWeights = particleFilteringWeights(Rcpp::_, observationSize - 1);
     for(int m = 0; m < newParamSize; m++){
       output[m] = sum(lastWeights * tauEStep[m](Rcpp::_, observationSize - 1));
@@ -324,30 +320,41 @@ public:
     for(int k = 0; k < (observationSize - 1);k++){
       propagateParticles(k);
       // initializeBackwardSampling(k);// Samples of ancestor index is made here
+      Rcpp::NumericVector currentWeights = particleFilteringWeights(Rcpp::_, k);
       for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
         // setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
         sum_IS_weights = 0;
+        double curParticle = particleSet(i, k + 1);
+        // Choosing ancestoir
+        Rcpp::IntegerVector ancestInd = GenericFunctions::sampleReplace(particleIndexes,
+                                                                        backwardSampleSize,
+                                                                        currentWeights);
+        Rcpp::NumericVector ancestPart(backwardSampleSize);
+        Rcpp::NumericVector IS_weights(backwardSampleSize);
         for(unsigned int l = 0; l < backwardSampleSize; l++){
-          int chosenAncestorIndex = getBackwardIndex_IS(k + 1);
-          updateTauEStep_IS(k + 1, i, chosenAncestorIndex, testedModels);
+          ancestPart(l) = particleSet(ancestInd(l), k);
+          IS_weights(l) = propModel.evalTransitionDensityUnit(ancestPart(l), 
+                                                            curParticle,
+                                                            observationTimes(k), 
+                                                            observationTimes(k + 1),
+                                                            densitySampleSize, 
+                                                            false);
+          sum_IS_weights += IS_weights(l);
+        }
+        IS_weights = IS_weights / sum_IS_weights;
+        for(unsigned int l = 0; l < backwardSampleSize; l++){
+          updateTauEStep_IS(k + 1, i, ancestInd(l), IS_weights(l), testedModels);
           //k + 1 is the time index from which the backward is done, 
           //i is the corresponding particle of this generation
         }
-        std::cout << "sum of IS_Weights" << sum_IS_weights << std::endl;
-        
-        // Normalization by importance weights
-        for(unsigned int m; m < newParamSize; m++){
-          std::cout << "youhou, particle " << std::endl; 
-          tauEStep[m](i, k + 1) = tauEStep[m](i, k + 1) / sum_IS_weights;
-        }
-        std::cout << "end of iteration " << i << std::endl;
+        // std::cout << "sum of IS_Weights" << sum_IS_weights << std::endl;
       }
     }
-    for(unsigned int m; m < newParamSize; m++){
-      std::cout << "m = " << m << std::endl;
-      Rcpp::NumericMatrix taus = tauEStep[m];
-      DebugMethods::debugprint(taus, "taus_MC");
-    }
+    // for(unsigned int m = 0; m < newParamSize; m++){
+    //   std::cout << "m = " << m << std::endl;
+    //   Rcpp::NumericMatrix taus = tauEStep[m];
+    //   DebugMethods::debugprint(taus, "taus_MC");
+    // }
     Rcpp::NumericVector lastWeights = particleFilteringWeights(Rcpp::_, observationSize - 1);
     for(int m = 0; m < newParamSize; m++){
       output[m] = sum(lastWeights * tauEStep[m](Rcpp::_, observationSize - 1));
