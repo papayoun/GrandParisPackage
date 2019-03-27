@@ -293,6 +293,29 @@ public:
       propagateParticles(k);
       // initializeBackwardSampling(k);// Samples of ancestor index is made here
       for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
+        setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
+        sum_IS_weights = 0;
+        for(unsigned int l = 0; l < backwardSampleSize; l++){
+          int chosenAncestorIndex = getBackwardIndex(k + 1, i);
+          updateTauEStep(k + 1, i, chosenAncestorIndex, testedModels);
+          //k + 1 is the time index from which the backward is done, i is the corresponding particle of this generation
+        }
+      }
+    }
+    Rcpp::NumericVector lastWeights = particleFilteringWeights(Rcpp::_, observationSize - 1);
+    for(int m = 0; m < newParamSize; m++){
+      output[m] = sum(lastWeights * tauEStep[m](Rcpp::_, observationSize - 1));
+    }
+    return output;
+  Rcpp::NumericVector evalEStep_IS(const std::vector<SINE_POD>& testedModels){
+    unsigned int newParamSize = testedModels.size();
+    Rcpp::NumericVector output(newParamSize);
+    initializeTauEStep(newParamSize);// Initialize matrix of 0
+    setInitalParticles();
+    for(int k = 0; k < (observationSize - 1);k++){
+      propagateParticles(k);
+      // initializeBackwardSampling(k);// Samples of ancestor index is made here
+      for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
         // setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
         sum_IS_weights = 0;
         for(unsigned int l = 0; l < backwardSampleSize; l++){
