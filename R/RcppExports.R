@@ -29,3 +29,10 @@ GEM <- function(observations, observationTimes, thetaStart, sigma2Start, nIterat
     .Call('_GrandParisPackage_GEM', PACKAGE = 'GrandParisPackage', observations, observationTimes, thetaStart, sigma2Start, nIterations, nModels, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2)
 }
 
+#' @title EM algortihm
+#' @name GEM_IS
+#' @export
+GEM_IS <- function(observations, observationTimes, thetaStart, sigma2Start, nIterations = 20L, nModels = 5L, randomWalkParam = 2, particleSize = 100L, densitySampleSize = 30L, logDensitySampleSize = 30L, backwardSampleSize = 2L, backwardSamplingMaxTry = 100000000L, skeletonSimulationMaxTry = 10000000L, estimateTheta = TRUE, estimateSigma2 = TRUE) {
+    .Call('_GrandParisPackage_GEM_IS', PACKAGE = 'GrandParisPackage', observations, observationTimes, thetaStart, sigma2Start, nIterations, nModels, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2)
+}
+
