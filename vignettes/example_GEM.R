@@ -11,7 +11,7 @@ allRes <- mclapply(1:n_case, function(i){
   thetaStart <- runif(1, 0, 2 * pi)
   sigma2Start <- runif(1, 0.2, 2)
   myTry <- GEM_IS(observations = observations, observationTimes = times, thetaStart = thetaStart, 
-               sigma2Start = sigma2Start, nIterations = 4, nModels = 20)
+               sigma2Start = sigma2Start, nIterations = 50, nModels = 5)
   colnames(myTry) = c("theta", "sigma2")
   myTry
 }, mc.cores = min(n_case, detectCores()))
