@@ -1,6 +1,6 @@
 # library(GrandParisPackage)
 library(parallel)
-seed <- 122
+seed <- 123
 set.seed(seed)
 trueTheta <- pi / 4; trueSigma2 <- 1;
 n <- 100; times <- seq(0, to = 50, length = n);
@@ -15,6 +15,21 @@ allRes <- mclapply(1:n_case, function(i){
   colnames(myTry) = c("theta", "sigma2")
   myTry
 }, mc.cores = min(n_case, detectCores()))
+
+names(allRes) <- paste("case", 1:n_case, sep = "_")
+all_res_df <- allRes %>% 
+  map(as.data.frame) %>%
+  map(~ rowid_to_column(., var = "iteration")) %>% 
+  bind_rows(.id = "case") %>% 
+  gather(-case, -iteration, key = "Parameter", value = "estimation",
+         factor_key = F) %>% 
+  mutate(Parameter = case_when(Parameter == "sigma2" ~ "sigma^2",
+                               Parameter == "theta" ~ "theta"))
+
+ggplot(all_res_df, 
+       aes(x = iteration, y = estimation, col = case)) +
+  facet_wrap(~Parameter, labeller = "label_parsed") +
+  geom_line() +theme(legend.position = "none")
 
 thetaEst <- sapply(allRes, function(x) x[,"theta"]) %% (2 * pi)
 sigmaEst <- sapply(allRes, function(x) x[, "sigma2"])

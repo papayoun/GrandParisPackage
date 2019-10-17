@@ -15,6 +15,7 @@ private:
   Rcpp::NumericVector observationDensityValues;
   Rcpp::NumericMatrix particleSet;
   Rcpp::NumericMatrix particleFilteringWeights;
+  Rcpp::NumericMatrix tau_E_X; // matrices of dim particleSize * observationSize
   std::vector<Rcpp::NumericMatrix> tauEStep;// numberModels matrices of dim particleSize * observationSize
   std::vector<Rcpp::NumericMatrix> tauTangentFilter;
   ProposalSINEModel propModel;
@@ -53,6 +54,10 @@ private:
       tauTangentFilter[i] = zeroMatrix;
     }
   };
+  void initializeTau_E_X(){
+    Rcpp::NumericMatrix zeroMatrix(particleSize, observationSize); zeroMatrix.fill(0);
+    tau_E_X = zeroMatrix;
+  };
   void initializeBackwardSampling(unsigned int ancestorIndex){
     backwardSamplingCounter = 0;
     Rcpp::NumericVector weights = particleFilteringWeights(Rcpp::_, ancestorIndex);
@@ -87,17 +92,6 @@ private:
                                                                                   newParts,
                                                                             t0, tF, densitySampleSize, false);// the true is to use GPE2
     observationDensityValues = propModel.evalObservationDensity(newParts, futureObs);
-    // observationDensityValues is an attribute and therefore is stocked for zetaUpdate
-    
-    //////////// DEBUG LINES
-    // Rcpp::NumericVector newParts = particleSet(Rcpp::_, ancestorIndex+1);
-    // DebugMethods::debugprint(newParts, newParts", false);
-    // Rcpp::NumericVector newOD = Rcpp::dnorm(newParts, futureObs, pow(propModel.getParams()[1], 0.5));
-    // DebugMethods::debugprint(newOD, "newOD", false);
-    // DebugMethods::debugprint(particleSet, "particleSet");
-    // DebugMethods::debugprint(transitionDensityValues, "transDens", false);
-    // DebugMethods::debugprint(observationDensityValues, "obsDens", false);
-    ///////////// END DEBUG
     Rcpp::NumericVector unNormedWeights = transitionDensityValues * observationDensityValues / proposalDensityValues;
     particleFilteringWeights(Rcpp::_, ancestorIndex + 1) = normWeights(unNormedWeights);
   };
@@ -144,6 +138,28 @@ private:
                                                             backwardWeights)(0);
     return ancestor;
   };
+  void updateTauTracking(const unsigned int& childIndex, 
+                         const unsigned int& childParticleIndex,
+                      const unsigned int& ancestorParticleIndex, 
+                      const bool& tracked_X){
+    double h_term = 0;
+    if(tracked_X){
+      h_term = particleSet(ancestorParticleIndex, childIndex - 1);
+    }
+    tau_E_X(childParticleIndex, childIndex) += (tau_E_X(ancestorParticleIndex, childIndex - 1) + 
+        h_term) / backwardSampleSize;
+  };
+  void updateTauTracking_IS(const unsigned int& childIndex, 
+                         const unsigned int& childParticleIndex,
+                         const unsigned int& ancestorParticleIndex,
+                         const double IS_weight,
+                         const bool& tracked_X){
+    double h_term = 0;
+    if(tracked_X){
+      h_term = particleSet(ancestorParticleIndex, childIndex - 1);
+    }
+    tau_E_X(childParticleIndex, childIndex) += IS_weight * (tau_E_X(ancestorParticleIndex, childIndex - 1) + h_term);
+  };
   void updateTauEStep(const unsigned int& childIndex, const unsigned int& childParticleIndex,
                       const unsigned int& ancestorParticleIndex, const std::vector<SINE_POD>& testedModels){
     for(unsigned int m = 0; m < testedModels.size(); m++){
@@ -166,8 +182,8 @@ private:
       double sampledLogQ = model.getModel().unbiasedLogDensityEstimate(particleSet(ancestorParticleIndex, childIndex - 1),
                                           particleSet(childParticleIndex, childIndex),
                                           observationTimes(childIndex - 1),
-                                          observationTimes(childIndex), 
-                                          logDensitySampleSize, 
+                                          observationTimes(childIndex),
+                                          logDensitySampleSize,
                                           skeletonSimulationMaxTry);
       double logObsDensityTerm =  log(model.observationDensity(particleSet(childParticleIndex, childIndex),
                                                                observations(childIndex)));
@@ -283,6 +299,71 @@ public:
   };
   Rcpp::NumericMatrix getParticles() const{return particleSet;};
   Rcpp::NumericMatrix getWeights() const{return particleFilteringWeights;};
+  double eval_E_X_tracked(const int tracked_t){
+    double output = 0;
+    initializeTau_E_X();// Initialize matrix of 0
+    setInitalParticles();
+    for(int k = 0; k < (observationSize - 1);k++){
+      bool update_X = (k == tracked_t);
+      propagateParticles(k);
+      initializeBackwardSampling(k);// Samples of ancestor index is made here
+      for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
+        setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
+        sum_IS_weights = 0;
+        for(unsigned int l = 0; l < backwardSampleSize; l++){
+          int chosenAncestorIndex = getBackwardIndex(k + 1, i);
+          updateTauTracking(k + 1, i, chosenAncestorIndex, update_X);
+          //k + 1 is the time index from which the backward is done, i is the corresponding particle of this generation
+        }
+      }
+    }
+    Rcpp::NumericVector lastWeights = particleFilteringWeights(Rcpp::_, observationSize - 1);
+    output = sum(lastWeights * tau_E_X(Rcpp::_, observationSize - 1));
+    return output;
+  }
+  double eval_E_X_tracked_IS(const int tracked_t){
+    double output = 0;
+    initializeTau_E_X();// Initialize matrix of 0
+    setInitalParticles();
+    for(int k = 0; k < (observationSize - 1);k++){
+      bool update_X = (k == tracked_t);
+      propagateParticles(k);
+      // initializeBackwardSampling(k);// Samples of ancestor index is made here
+      Rcpp::NumericVector currentWeights = particleFilteringWeights(Rcpp::_, k);
+      for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
+        // setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
+        sum_IS_weights = 0;
+        double curParticle = particleSet(i, k + 1);
+        // Choosing ancestoir
+        Rcpp::IntegerVector ancestInd = GenericFunctions::sampleReplace(particleIndexes,
+                                                                        backwardSampleSize,
+                                                                        currentWeights);
+        Rcpp::NumericVector ancestPart(backwardSampleSize);
+        Rcpp::NumericVector IS_weights(backwardSampleSize);
+        for(unsigned int l = 0; l < backwardSampleSize; l++){
+          ancestPart(l) = particleSet(ancestInd(l), k);
+          IS_weights(l) = propModel.evalTransitionDensityUnit(ancestPart(l), 
+                     curParticle,
+                     observationTimes(k), 
+                     observationTimes(k + 1),
+                     densitySampleSize, 
+                     false);
+          sum_IS_weights += IS_weights(l);
+        }
+        IS_weights = IS_weights / sum_IS_weights;
+        for(unsigned int l = 0; l < backwardSampleSize; l++){
+          updateTauTracking_IS(k + 1, i, ancestInd(l), IS_weights(l), update_X);
+          //k + 1 is the time index from which the backward is done, 
+          //i is the corresponding particle of this generation
+        }
+        // std::cout << "sum of IS_Weights" << sum_IS_weights << std::endl;
+      }
+    }
+    Rcpp::NumericVector lastWeights = particleFilteringWeights(Rcpp::_, observationSize - 1);
+    output = sum(lastWeights * tau_E_X(Rcpp::_, observationSize - 1));
+    return output;
+  };// end of evalEstep method;
+  
   Rcpp::NumericVector evalEStep(const std::vector<SINE_POD>& testedModels){
     unsigned int newParamSize = testedModels.size();
     Rcpp::NumericVector output(newParamSize);
@@ -301,11 +382,6 @@ public:
         }
       }
     }
-    // for(unsigned int m; m < newParamSize; m++){
-    //   std::cout << "m = " << m << std::endl;
-    //   Rcpp::NumericMatrix taus = tauEStep[m];
-    //   DebugMethods::debugprint(taus, "taus_MC");
-    // }
     Rcpp::NumericVector lastWeights = particleFilteringWeights(Rcpp::_, observationSize - 1);
     for(int m = 0; m < newParamSize; m++){
       output[m] = sum(lastWeights * tauEStep[m](Rcpp::_, observationSize - 1));
