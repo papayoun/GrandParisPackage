@@ -136,7 +136,7 @@ foo_npart <- function(n_particle){
                                                         observationTimes = times, 
                                                         thetaStart = thetaStart, 
                                                         particleSize = n_particle, 
-                                                        backwardSampleSize = ceil(n_particle * 0.1),
+                                                        backwardSampleSize = ceiling(n_particle * 0.1),
                                                         sigma2Start = sigma2Start, 
                                                         nIterations = 1)
                   dur <- as.numeric(Sys.time() - t1)
