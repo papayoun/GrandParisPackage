@@ -11,7 +11,7 @@ Depends: Rcpp (>= 0.12.8)
 Imports: Rcpp (>= 0.12.18)
 LinkingTo: Rcpp, RcppArmadillo
 RcppModules: SINEModel_Module, ProposalModel_Module
-RoxygenNote: 6.1.0
+RoxygenNote: 6.1.1
 Encoding: UTF-8
 Suggests: knitr,
     rmarkdown

@@ -57,6 +57,81 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// GEM_IS
+Rcpp::NumericMatrix GEM_IS(const Rcpp::NumericVector& observations, const Rcpp::NumericVector& observationTimes, const double thetaStart, const double sigma2Start, const unsigned int nIterations, const unsigned int nModels, const double randomWalkParam, const unsigned int particleSize, const unsigned int densitySampleSize, const unsigned int logDensitySampleSize, const unsigned int backwardSampleSize, const unsigned int backwardSamplingMaxTry, const unsigned int skeletonSimulationMaxTry, const bool estimateTheta, const bool estimateSigma2);
+RcppExport SEXP _GrandParisPackage_GEM_IS(SEXP observationsSEXP, SEXP observationTimesSEXP, SEXP thetaStartSEXP, SEXP sigma2StartSEXP, SEXP nIterationsSEXP, SEXP nModelsSEXP, SEXP randomWalkParamSEXP, SEXP particleSizeSEXP, SEXP densitySampleSizeSEXP, SEXP logDensitySampleSizeSEXP, SEXP backwardSampleSizeSEXP, SEXP backwardSamplingMaxTrySEXP, SEXP skeletonSimulationMaxTrySEXP, SEXP estimateThetaSEXP, SEXP estimateSigma2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type observations(observationsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type observationTimes(observationTimesSEXP);
+    Rcpp::traits::input_parameter< const double >::type thetaStart(thetaStartSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma2Start(sigma2StartSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type nIterations(nIterationsSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type nModels(nModelsSEXP);
+    Rcpp::traits::input_parameter< const double >::type randomWalkParam(randomWalkParamSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type particleSize(particleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type densitySampleSize(densitySampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type logDensitySampleSize(logDensitySampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type backwardSampleSize(backwardSampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type backwardSamplingMaxTry(backwardSamplingMaxTrySEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type skeletonSimulationMaxTry(skeletonSimulationMaxTrySEXP);
+    Rcpp::traits::input_parameter< const bool >::type estimateTheta(estimateThetaSEXP);
+    Rcpp::traits::input_parameter< const bool >::type estimateSigma2(estimateSigma2SEXP);
+    rcpp_result_gen = Rcpp::wrap(GEM_IS(observations, observationTimes, thetaStart, sigma2Start, nIterations, nModels, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// E_track
+double E_track(const Rcpp::NumericVector& observations, const Rcpp::NumericVector& observationTimes, const int ind_tracked, const double thetaStart, const double sigma2Start, const unsigned int nIterations, const double randomWalkParam, const unsigned int particleSize, const unsigned int densitySampleSize, const unsigned int logDensitySampleSize, const unsigned int backwardSampleSize, const unsigned int backwardSamplingMaxTry, const unsigned int skeletonSimulationMaxTry, const bool estimateTheta, const bool estimateSigma2);
+RcppExport SEXP _GrandParisPackage_E_track(SEXP observationsSEXP, SEXP observationTimesSEXP, SEXP ind_trackedSEXP, SEXP thetaStartSEXP, SEXP sigma2StartSEXP, SEXP nIterationsSEXP, SEXP randomWalkParamSEXP, SEXP particleSizeSEXP, SEXP densitySampleSizeSEXP, SEXP logDensitySampleSizeSEXP, SEXP backwardSampleSizeSEXP, SEXP backwardSamplingMaxTrySEXP, SEXP skeletonSimulationMaxTrySEXP, SEXP estimateThetaSEXP, SEXP estimateSigma2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type observations(observationsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type observationTimes(observationTimesSEXP);
+    Rcpp::traits::input_parameter< const int >::type ind_tracked(ind_trackedSEXP);
+    Rcpp::traits::input_parameter< const double >::type thetaStart(thetaStartSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma2Start(sigma2StartSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type nIterations(nIterationsSEXP);
+    Rcpp::traits::input_parameter< const double >::type randomWalkParam(randomWalkParamSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type particleSize(particleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type densitySampleSize(densitySampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type logDensitySampleSize(logDensitySampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type backwardSampleSize(backwardSampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type backwardSamplingMaxTry(backwardSamplingMaxTrySEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type skeletonSimulationMaxTry(skeletonSimulationMaxTrySEXP);
+    Rcpp::traits::input_parameter< const bool >::type estimateTheta(estimateThetaSEXP);
+    Rcpp::traits::input_parameter< const bool >::type estimateSigma2(estimateSigma2SEXP);
+    rcpp_result_gen = Rcpp::wrap(E_track(observations, observationTimes, ind_tracked, thetaStart, sigma2Start, nIterations, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2));
+    return rcpp_result_gen;
+END_RCPP
+}
+// E_track_IS
+double E_track_IS(const Rcpp::NumericVector& observations, const Rcpp::NumericVector& observationTimes, const int ind_tracked, const double thetaStart, const double sigma2Start, const unsigned int nIterations, const double randomWalkParam, const unsigned int particleSize, const unsigned int densitySampleSize, const unsigned int logDensitySampleSize, const unsigned int backwardSampleSize, const unsigned int backwardSamplingMaxTry, const unsigned int skeletonSimulationMaxTry, const bool estimateTheta, const bool estimateSigma2);
+RcppExport SEXP _GrandParisPackage_E_track_IS(SEXP observationsSEXP, SEXP observationTimesSEXP, SEXP ind_trackedSEXP, SEXP thetaStartSEXP, SEXP sigma2StartSEXP, SEXP nIterationsSEXP, SEXP randomWalkParamSEXP, SEXP particleSizeSEXP, SEXP densitySampleSizeSEXP, SEXP logDensitySampleSizeSEXP, SEXP backwardSampleSizeSEXP, SEXP backwardSamplingMaxTrySEXP, SEXP skeletonSimulationMaxTrySEXP, SEXP estimateThetaSEXP, SEXP estimateSigma2SEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type observations(observationsSEXP);
+    Rcpp::traits::input_parameter< const Rcpp::NumericVector& >::type observationTimes(observationTimesSEXP);
+    Rcpp::traits::input_parameter< const int >::type ind_tracked(ind_trackedSEXP);
+    Rcpp::traits::input_parameter< const double >::type thetaStart(thetaStartSEXP);
+    Rcpp::traits::input_parameter< const double >::type sigma2Start(sigma2StartSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type nIterations(nIterationsSEXP);
+    Rcpp::traits::input_parameter< const double >::type randomWalkParam(randomWalkParamSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type particleSize(particleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type densitySampleSize(densitySampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type logDensitySampleSize(logDensitySampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type backwardSampleSize(backwardSampleSizeSEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type backwardSamplingMaxTry(backwardSamplingMaxTrySEXP);
+    Rcpp::traits::input_parameter< const unsigned int >::type skeletonSimulationMaxTry(skeletonSimulationMaxTrySEXP);
+    Rcpp::traits::input_parameter< const bool >::type estimateTheta(estimateThetaSEXP);
+    Rcpp::traits::input_parameter< const bool >::type estimateSigma2(estimateSigma2SEXP);
+    rcpp_result_gen = Rcpp::wrap(E_track_IS(observations, observationTimes, ind_tracked, thetaStart, sigma2Start, nIterations, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 RcppExport SEXP _rcpp_module_boot_ProposalModel_Module();
 RcppExport SEXP _rcpp_module_boot_SINEModel_Module();
@@ -64,6 +139,9 @@ RcppExport SEXP _rcpp_module_boot_SINEModel_Module();
 static const R_CallMethodDef CallEntries[] = {
     {"_GrandParisPackage_fastTangOR", (DL_FUNC) &_GrandParisPackage_fastTangOR, 16},
     {"_GrandParisPackage_GEM", (DL_FUNC) &_GrandParisPackage_GEM, 15},
+    {"_GrandParisPackage_GEM_IS", (DL_FUNC) &_GrandParisPackage_GEM_IS, 15},
+    {"_GrandParisPackage_E_track", (DL_FUNC) &_GrandParisPackage_E_track, 15},
+    {"_GrandParisPackage_E_track_IS", (DL_FUNC) &_GrandParisPackage_E_track_IS, 15},
     {"_rcpp_module_boot_ProposalModel_Module", (DL_FUNC) &_rcpp_module_boot_ProposalModel_Module, 0},
     {"_rcpp_module_boot_SINEModel_Module", (DL_FUNC) &_rcpp_module_boot_SINEModel_Module, 0},
     {NULL, NULL, 0}

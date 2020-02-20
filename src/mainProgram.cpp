@@ -24,19 +24,19 @@
 //' @export
 // [[Rcpp::export]]
 Rcpp::List fastTangOR(const Rcpp::NumericVector& observations,
-                const Rcpp::NumericVector& observationTimes,
-                const double& thetaModel, const double& sigma2,
-                const Rcpp::LogicalVector& updateOrders,
-                Rcpp::NumericMatrix& gradientSteps,
-                const double& randomWalkParam = 2,
-                const unsigned int& particleSize = 100,
-                const unsigned int& densitySampleSize = 30,
-                const unsigned int& logDensitySampleSize = 30,
-                const unsigned int& backwardSampleSize = 2,
-                const unsigned int& backwardSamplingMaxTry = 100000000,
-                const unsigned int& skeletonSimulationMaxTry = 10000000,
-                const bool& estimateTheta = true, const bool& estimateSigma2 = true,
-                const bool& all = false){
+                      const Rcpp::NumericVector& observationTimes,
+                      const double& thetaModel, const double& sigma2,
+                      const Rcpp::LogicalVector& updateOrders,
+                      Rcpp::NumericMatrix& gradientSteps,
+                      const double& randomWalkParam = 2,
+                      const unsigned int& particleSize = 100,
+                      const unsigned int& densitySampleSize = 30,
+                      const unsigned int& logDensitySampleSize = 30,
+                      const unsigned int& backwardSampleSize = 2,
+                      const unsigned int& backwardSamplingMaxTry = 100000000,
+                      const unsigned int& skeletonSimulationMaxTry = 10000000,
+                      const bool& estimateTheta = true, const bool& estimateSigma2 = true,
+                      const bool& all = false){
   SINE_POD trueModel(thetaModel, sigma2);
   ProposalSINEModel propModel(randomWalkParam, trueModel, estimateTheta, estimateSigma2);
   SDEParticleSmoother mySmoother(observations, observationTimes,  propModel,
@@ -66,18 +66,18 @@ SINE_POD generateModel(double theta0, double sigma20, double sd, double thresh =
 //' @export
 // [[Rcpp::export]]
 Rcpp::NumericMatrix GEM(const Rcpp::NumericVector& observations,
-               const Rcpp::NumericVector& observationTimes,
-               const double thetaStart, const double sigma2Start,
-               const unsigned int nIterations = 20,
-               const unsigned int nModels = 5,
-               const double randomWalkParam = 2,
-               const unsigned int particleSize = 100,
-               const unsigned int densitySampleSize = 30,
-               const unsigned int logDensitySampleSize = 30,
-               const unsigned int backwardSampleSize = 2,
-               const unsigned int backwardSamplingMaxTry = 100000000,
-               const unsigned int skeletonSimulationMaxTry = 10000000,
-               const bool estimateTheta = true, const bool estimateSigma2 = true){
+                        const Rcpp::NumericVector& observationTimes,
+                        const double thetaStart, const double sigma2Start,
+                        const unsigned int nIterations = 20,
+                        const unsigned int nModels = 5,
+                        const double randomWalkParam = 2,
+                        const unsigned int particleSize = 100,
+                        const unsigned int densitySampleSize = 30,
+                        const unsigned int logDensitySampleSize = 30,
+                        const unsigned int backwardSampleSize = 2,
+                        const unsigned int backwardSamplingMaxTry = 100000000,
+                        const unsigned int skeletonSimulationMaxTry = 10000000,
+                        const bool estimateTheta = true, const bool estimateSigma2 = true){
   Rcpp::NumericMatrix output(nIterations + 1, 2);
   output.fill(sigma2Start);
   output(0, 0) = thetaStart;
@@ -101,3 +101,94 @@ Rcpp::NumericMatrix GEM(const Rcpp::NumericVector& observations,
   return output;
 }
 
+//' @title EM algortihm
+//' @name GEM_IS
+//' @export
+// [[Rcpp::export]]
+Rcpp::NumericMatrix GEM_IS(const Rcpp::NumericVector& observations,
+                        const Rcpp::NumericVector& observationTimes,
+                        const double thetaStart, const double sigma2Start,
+                        const unsigned int nIterations = 20,
+                        const unsigned int nModels = 5,
+                        const double randomWalkParam = 2,
+                        const unsigned int particleSize = 100,
+                        const unsigned int densitySampleSize = 30,
+                        const unsigned int logDensitySampleSize = 30,
+                        const unsigned int backwardSampleSize = 2,
+                        const unsigned int backwardSamplingMaxTry = 100000000,
+                        const unsigned int skeletonSimulationMaxTry = 10000000,
+                        const bool estimateTheta = true, const bool estimateSigma2 = true){
+  Rcpp::NumericMatrix output(nIterations + 1, 2);
+  output.fill(sigma2Start);
+  output(0, 0) = thetaStart;
+  for(unsigned int iter = 1; iter < nIterations + 1; iter++){
+    SINE_POD startModel(output(iter - 1, 0), output(iter - 1, 1));
+    std::vector<SINE_POD> testedModels(nModels + 1);
+    testedModels[0] = startModel;
+    for(int i = 1; i < (nModels + 1); i++){
+      SINE_POD tmp = generateModel(output(iter - 1, 0), output(iter - 1, 1), 1.0 / iter);
+      testedModels[i] = tmp;
+    }
+    ProposalSINEModel propModel(randomWalkParam, startModel, estimateTheta, estimateSigma2);
+    SDEParticleSmoother mySmoother(observations, observationTimes,  propModel,
+                                   particleSize, densitySampleSize , logDensitySampleSize,
+                                   backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry);
+    Rcpp::NumericVector E_value = mySmoother.evalEStep_IS(testedModels);
+    unsigned int bestModelInd = Rcpp::which_max(E_value);
+    output(iter, 0) = testedModels[bestModelInd].getParams()[0];
+    output(iter, 1) = testedModels[bestModelInd].getParams()[1];
+  }
+  return output;
+}
+
+//' @title Tracking algortihm
+//' @name E_track
+//' @export
+// [[Rcpp::export]]
+double E_track(const Rcpp::NumericVector& observations,
+                        const Rcpp::NumericVector& observationTimes,
+                        const int ind_tracked,
+                        const double thetaStart, const double sigma2Start,
+                        const unsigned int nIterations = 20,
+                        const double randomWalkParam = 2,
+                        const unsigned int particleSize = 100,
+                        const unsigned int densitySampleSize = 30,
+                        const unsigned int logDensitySampleSize = 30,
+                        const unsigned int backwardSampleSize = 2,
+                        const unsigned int backwardSamplingMaxTry = 100000000,
+                        const unsigned int skeletonSimulationMaxTry = 10000000,
+                        const bool estimateTheta = true, const bool estimateSigma2 = true){
+  SINE_POD startModel(thetaStart, sigma2Start);
+  ProposalSINEModel propModel(randomWalkParam, startModel, estimateTheta, estimateSigma2);
+  SDEParticleSmoother mySmoother(observations, observationTimes,  propModel,
+                                   particleSize, densitySampleSize , logDensitySampleSize,
+                                   backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry);
+  double E_X_value = mySmoother.eval_E_X_tracked(ind_tracked);
+  return E_X_value;
+}
+
+//' @title Tracking with IS
+//' @name track_IS
+//' @export
+// [[Rcpp::export]]
+double E_track_IS(const Rcpp::NumericVector& observations,
+               const Rcpp::NumericVector& observationTimes,
+               const int ind_tracked,
+               const double thetaStart, const double sigma2Start,
+               const unsigned int nIterations = 20,
+               const double randomWalkParam = 2,
+               const unsigned int particleSize = 100,
+               const unsigned int densitySampleSize = 30,
+               const unsigned int logDensitySampleSize = 30,
+               const unsigned int backwardSampleSize = 2,
+               const unsigned int backwardSamplingMaxTry = 100000000,
+               const unsigned int skeletonSimulationMaxTry = 10000000,
+               const bool estimateTheta = true, const bool estimateSigma2 = true){
+  SINE_POD startModel(thetaStart, sigma2Start);
+  ProposalSINEModel propModel(randomWalkParam, startModel, estimateTheta, estimateSigma2);
+  SDEParticleSmoother mySmoother(observations, observationTimes,  propModel,
+                                 particleSize, densitySampleSize , logDensitySampleSize,
+                                 backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry);
+  double E_X_value = mySmoother.eval_E_X_tracked_IS(ind_tracked);
+  return E_X_value;
+}

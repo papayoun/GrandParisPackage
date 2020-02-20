@@ -8,7 +8,7 @@ editor_options:
 ---
 
 ```{r setup, include = FALSE}
-knitr::opts_chunk$set(comment = NA, fig.width = 8, 
+knitr::opts_chunk$set(comment = NA, fig.width = 8, eval = F,
   fig.height = 6, fig.align = "center"
 )
 ```
@@ -85,6 +85,7 @@ abline(v = c(trueTheta, testedThetas[which.max(logDensities)]),
 ```
 
 # Estimation
+
 ## Estimation with known $\sigma^2$
 ```{r estimation, cache = T}
 observations <- simulatedPOD[, "observations"]
