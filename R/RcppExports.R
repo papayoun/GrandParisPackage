@@ -18,8 +18,8 @@ NULL
 #' @title Main program for tangent online estimation
 #' @name fastTangOR
 #' @export
-fastTangOR <- function(observations, observationTimes, thetaModel, sigma2, updateOrders, gradientSteps, randomWalkParam = 2, particleSize = 100L, densitySampleSize = 30L, logDensitySampleSize = 30L, backwardSampleSize = 2L, backwardSamplingMaxTry = 100000000L, skeletonSimulationMaxTry = 10000000L, estimateTheta = TRUE, estimateSigma2 = TRUE, all = FALSE) {
-    .Call('_GrandParisPackage_fastTangOR', PACKAGE = 'GrandParisPackage', observations, observationTimes, thetaModel, sigma2, updateOrders, gradientSteps, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2, all)
+fastTangOR <- function(observations, observationTimes, thetaModel, sigma2, updateOrders, gradientSteps, randomWalkParam = 2, particleSize = 100L, densitySampleSize = 30L, logDensitySampleSize = 30L, backwardSampleSize = 2L, backwardSamplingMaxTry = 100000000L, skeletonSimulationMaxTry = 10000000L, estimateTheta = TRUE, estimateSigma2 = TRUE, all = FALSE, IS = FALSE) {
+    .Call('_GrandParisPackage_fastTangOR', PACKAGE = 'GrandParisPackage', observations, observationTimes, thetaModel, sigma2, updateOrders, gradientSteps, randomWalkParam, particleSize, densitySampleSize, logDensitySampleSize, backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry, estimateTheta, estimateSigma2, all, IS)
 }
 
 #' @title EM algortihm

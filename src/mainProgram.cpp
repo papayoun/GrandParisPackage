@@ -36,20 +36,32 @@ Rcpp::List fastTangOR(const Rcpp::NumericVector& observations,
                       const unsigned int& backwardSamplingMaxTry = 100000000,
                       const unsigned int& skeletonSimulationMaxTry = 10000000,
                       const bool& estimateTheta = true, const bool& estimateSigma2 = true,
-                      const bool& all = false){
+                      const bool& all = false, const bool& IS = false){
   SINE_POD trueModel(thetaModel, sigma2);
   ProposalSINEModel propModel(randomWalkParam, trueModel, estimateTheta, estimateSigma2);
   SDEParticleSmoother mySmoother(observations, observationTimes,  propModel,
                                  particleSize, densitySampleSize , logDensitySampleSize,
                                  backwardSampleSize, backwardSamplingMaxTry, skeletonSimulationMaxTry);
-  Rcpp::NumericMatrix output  = mySmoother.tangentFilterEstimation(updateOrders, gradientSteps);
-  if(all){
-    return Rcpp::List::create(Rcpp::Named("Estimates") = output,
-                              Rcpp::Named("Particles") = mySmoother.getParticles(),
-                              Rcpp::Named("Weights") = mySmoother.getWeights());
+  if(!IS){
+    Rcpp::NumericMatrix output  = mySmoother.tangentFilterEstimation(updateOrders, gradientSteps);
+    if(all){
+      return Rcpp::List::create(Rcpp::Named("Estimates") = output,
+                                Rcpp::Named("Particles") = mySmoother.getParticles(),
+                                Rcpp::Named("Weights") = mySmoother.getWeights());
+    }
+    else
+      return Rcpp::List::create(Rcpp::Named("Estimates") = output);
   }
-  else
-    return Rcpp::List::create(Rcpp::Named("Estimates") = output);
+  if(IS){
+    Rcpp::NumericMatrix output  = mySmoother.tangentFilterEstimation_IS(updateOrders, gradientSteps);
+    if(all){
+      return Rcpp::List::create(Rcpp::Named("Estimates") = output,
+                                Rcpp::Named("Particles") = mySmoother.getParticles(),
+                                Rcpp::Named("Weights") = mySmoother.getWeights());
+    }
+    else
+      return Rcpp::List::create(Rcpp::Named("Estimates") = output);
+  }
 }
 
 SINE_POD generateModel(double theta0, double sigma20, double sd, double thresh = 0.01){
