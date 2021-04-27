@@ -140,3 +140,18 @@ pointPlot <- ggplot(theta_est_gg, aes(x = times, y = estimate,
         axis.title = element_text(size = 20))
 pointPlot
 ```
+
+```{r}
+Res_AR <- fastTangOR(observations, times,
+                    thetaModel = thetaStart, sigma2 = trueSigma2,
+                    updateOrders = updateOrders, gradientSteps = gradientSteps, 
+                    all = T, estimateSigma2 = F, randomWalkParam = 1)
+Res_IS <- fastTangOR(observations, times,
+                    thetaModel = thetaStart, sigma2 = trueSigma2,
+                    updateOrders = updateOrders, gradientSteps = gradientSteps, 
+                    all = T, estimateSigma2 = F, randomWalkParam = 1, IS = TRUE,
+                    backwardSampleSize = 15)
+plot(Res_AR$Estimates[,1])
+plot(Res_IS$Estimates[,1])
+```
+
