@@ -206,6 +206,21 @@ private:
     tauTangentFilter[childIndex](childParticleIndex, Rcpp::_) = (tauTangentFilter[childIndex](childParticleIndex, Rcpp::_)
         + updateTerm);
   };
+  void updateTauTangentFilter_IS(const unsigned int& childIndex, const unsigned int& childParticleIndex,
+                              const unsigned int& ancestorParticleIndex, 
+                              const double IS_weight, bool debug = false){
+    Rcpp::NumericVector sampledGradLogQ = propModel.evalGradLogTransitionDensity(particleSet(ancestorParticleIndex, childIndex - 1), 
+                                                                                 particleSet(childParticleIndex, childIndex),
+                                                                                 observationTimes[childIndex - 1], 
+                                                                                                 observationTimes[childIndex],
+                                                                                                                 logDensitySampleSize, skeletonSimulationMaxTry);
+    Rcpp::NumericVector gradLogObsDensityTerm =  propModel.evalGradLogObservationDensity(particleSet(childParticleIndex, childIndex), observations[childIndex]);
+    Rcpp::NumericVector updateTerm = (tauTangentFilter[childIndex - 1](ancestorParticleIndex, Rcpp::_)
+      + sampledGradLogQ
+      + gradLogObsDensityTerm);
+    tauTangentFilter[childIndex](childParticleIndex, Rcpp::_) = (tauTangentFilter[childIndex](childParticleIndex, Rcpp::_)
+        + IS_weight * updateTerm);
+  }
   Rcpp::NumericVector getTauBar(const unsigned int&  childIndex){
     return(colMeans(tauTangentFilter[childIndex]));
   }
@@ -470,6 +485,58 @@ public:
       output(k + 1, Rcpp::_) = propModel.getParams();
     }
     return output;
-  };// end of evalEstep method;
+  };// end of tangentFilterEstimation method;
+  Rcpp::NumericMatrix tangentFilterEstimation_IS(const Rcpp::LogicalVector& updateOrders, 
+                                              Rcpp::NumericMatrix& gradientSteps){
+    Rcpp::NumericMatrix output(observationSize, 2);
+    output(0, Rcpp::_) = propModel.getParams();
+    initializeTauTangentFilter();// Initialize matrix of 0
+    setInitalParticles();
+    unsigned int updateCounter = 0;
+    for(int k = 0; k < (observationSize - 1); k++){
+      // std::cout << "iteration " << k << std::endl;
+      // DebugMethods::debugprint(propModel.getParams(), "Current Param", false);
+      gradientStep = gradientSteps(k, Rcpp::_);
+      propagateParticles(k);
+      // initializeBackwardSampling(k);// Samples of ancestor index is made here
+      Rcpp::NumericVector currentWeights = particleFilteringWeights(Rcpp::_, k);
+      for(unsigned int i = 0; i < particleSize; i++){// i indexes particles
+        // setDensityUpperBound(k + 1, i);// Density upperbound for particle xi_{k+1}^i
+        sum_IS_weights = 0;
+        double curParticle = particleSet(i, k + 1);
+        // Choosing ancestoir
+        Rcpp::IntegerVector ancestInd = GenericFunctions::sampleReplace(particleIndexes,
+                                                                        backwardSampleSize,
+                                                                        currentWeights);
+        Rcpp::NumericVector ancestPart(backwardSampleSize);
+        Rcpp::NumericVector IS_weights(backwardSampleSize);
+        for(unsigned int l = 0; l < backwardSampleSize; l++){
+          ancestPart(l) = particleSet(ancestInd(l), k);
+          IS_weights(l) = propModel.evalTransitionDensityUnit(ancestPart(l), 
+                     curParticle,
+                     observationTimes(k), 
+                     observationTimes(k + 1),
+                     densitySampleSize, 
+                     false);
+          sum_IS_weights += IS_weights(l);
+        }
+        IS_weights = IS_weights / sum_IS_weights;
+        for(unsigned int l = 0; l < backwardSampleSize; l++){
+          updateTauTangentFilter_IS(k + 1, i, ancestInd(l), IS_weights(l), updateOrders[k]);
+          //k + 1 is the time index from which the backward is done, i is the corresponding particle of this generation
+        }
+      }
+      if(updateOrders[k]){
+        // std::cout << "Iteration " << k << std::endl;
+        Rcpp::NumericVector newGradientUpdate = getGradientUpdate(k, updateCounter);
+        // DebugMethods::debugprint(newGradientUpdate, "Gradient", false);
+        Rcpp::NumericVector newParams = getNewParam(newGradientUpdate);
+        propModel.setParams(newParams);
+        updateCounter += 1;
+      }
+      output(k + 1, Rcpp::_) = propModel.getParams();
+    }
+    return output;
+  };// end of tangelFilterEstimation_IS method
 };
 #endif
